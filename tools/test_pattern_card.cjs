@@ -56,6 +56,10 @@ async function main() {
         }
         if (domain === "switch") selected().disable = service === "turn_on";
         if (domain === "text") states[data.entity_id].state = data.value;
+        if (data.entity_id === "button.trimlight_new_pattern") {
+          states["text.trimlight_pattern_name"].state = "New Pattern";
+          states["select.trimlight_pattern_source"].state = "New Pattern";
+        }
         if (domain === "select") {
           states[data.entity_id].state = data.option;
           if (data.entity_id.endsWith("pattern_mode")) attrs.mode = states[data.entity_id].attributes.options.indexOf(data.option);
@@ -97,13 +101,12 @@ async function main() {
     assert.match(await card.locator('[data-entry="7"]').getAttribute("class"), /off/);
     await card.locator('[data-select="mode"]').selectOption("Chase Forward");
     await page.waitForFunction(() => !document.querySelector("trimlight-pattern-card")._busy);
-    await card.locator('[data-name]').fill('<img src=x onerror="alert(1)">');
-    await card.locator('[data-name]').press("Tab");
-    await page.waitForFunction(() => !document.querySelector("trimlight-pattern-card")._busy);
-    assert.equal(await card.locator("img").count(), 0);
     assert.equal(await page.evaluate(() => window.mockCalls.some((c) => c.domain === "button")), false);
     await card.locator('[data-action="save"]').click();
-    await card.locator('[role="status"]').filter({hasText:"Saved a new copy"}).waitFor();
+    await card.locator('dialog input[name="patternName"]').fill('<img src=x onerror="alert(1)">');
+    await card.locator('dialog button[type="submit"]').click();
+    await card.locator('[role="status"]').filter({hasText:"Saved a new pattern copy"}).waitFor();
+    assert.equal(await card.locator("img").count(), 0);
     assert.equal(await page.evaluate(() => window.mockCalls.filter((c) => c.domain === "button").length), 1);
     await page.evaluate(() => { window.rejectPreview = true; });
     await card.locator('[data-action="preview"]').click();
