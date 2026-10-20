@@ -78,12 +78,14 @@ async function main() {
     assert.equal(await card.locator(".grid .entry").count(), 30);
     await page.screenshot({path:path.join(output, "trimlight-editor-dark-expanded.png"), fullPage:true});
     await card.locator('[data-entry="7"]').click();
+    await card.locator("dialog").waitFor({state:"visible"});
+    await card.locator("dialog [data-cancel]").click();
     await card.locator('[data-entry="7"]').getAttribute("aria-pressed").then((value) => assert.equal(value, "true"));
     await card.locator('[data-color="#ff0000"]').click();
     await page.waitForFunction(() => !document.querySelector("trimlight-pattern-card")._busy);
-    assert.equal(await card.locator('[data-count]').inputValue(), "1");
-    await card.locator('[data-count]').fill("5");
-    await card.locator('[data-count]').press("Tab");
+    await card.locator('[data-entry="7"]').click();
+    await card.locator('dialog input[name="count"]').fill("5");
+    await card.locator('dialog button[type="submit"]').click();
     await page.waitForFunction(() => !document.querySelector("trimlight-pattern-card")._busy);
     assert.equal(await card.locator('[data-entry="7"]').innerText(), "5");
     await card.locator('[data-disabled]').check();
