@@ -47,10 +47,14 @@ async function main() {
   assert.match(card.shadowRoot.innerHTML, /grid-template-columns:repeat\(6/);
   assert.match(card.shadowRoot.innerHTML, /background:var\(--ha-card-background,var\(--card-background-color\)\)/);
   assert.match(card.shadowRoot.innerHTML, /background:var\(--secondary-background-color\)/);
+  assert.equal((card.shadowRoot.innerHTML.match(/data-custom-slot="/g) || []).length, 9);
+  assert.equal((card.shadowRoot.innerHTML.match(/data-color="/g) || []).length, 21);
+  card._paletteExpanded = true; card._render();
   assert.equal((card.shadowRoot.innerHTML.match(/data-custom-slot="/g) || []).length, 16);
   assert.equal((card.shadowRoot.innerHTML.match(/data-color="/g) || []).length, 28);
   card._paletteExpanded = false; card._render();
-  assert.equal((card.shadowRoot.innerHTML.match(/data-custom-slot="/g) || []).length, 2);
+  assert.equal((card.shadowRoot.innerHTML.match(/data-custom-slot="/g) || []).length, 9);
+  assert.equal((card.shadowRoot.innerHTML.match(/data-color="/g) || []).length, 21);
   card._setCustomColor(15, "#123ABC");
   const restoredPalette = new Card();
   restoredPalette.setConfig({});
