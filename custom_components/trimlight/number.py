@@ -9,9 +9,11 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .controller import apply_effect_update
+from .controls import async_update_builtin, builtin_control_available
 from .data import get_data
 from .debug import async_log_event
 from .entity import TrimlightEntity
+from .editor import PatternEditorEntity
 from .effects import (
     find_builtin_preset,
     find_builtin_preset_by_name,
@@ -34,7 +36,62 @@ async def async_setup_entry(
 ) -> None:
     data = get_data(hass, entry.entry_id)
     coordinator = data.coordinator
-    async_add_entities([TrimlightSpeedNumber(hass, entry.entry_id, coordinator)])
+    async_add_entities([
+        TrimlightSpeedNumber(hass, entry.entry_id, coordinator),
+        TrimlightEffectLengthNumber(hass, entry.entry_id, coordinator),
+        *[PatternNumber(hass, entry.entry_id, coordinator, key, name, low, high)
+          for key, name, low, high in (
+              ("selected_index", "Entry", 0, 29), ("count", "Pixel Count", 0, 60),
+              ("speed", "Speed", 0, 255), ("brightness", "Brightness", 0, 255))],
+    ])
+
+
+class PatternNumber(PatternEditorEntity, NumberEntity):
+    _attr_native_step = 1
+    _attr_mode = NumberMode.SLIDER
+
+    def __init__(self, hass, entry_id, coordinator, key, name, low, high) -> None:
+        super().__init__(hass, entry_id, coordinator)
+        self.key = key
+        self._attr_name = f"Trimlight Pattern {name}"
+        self._attr_unique_id = f"{entry_id}_pattern_{key}"
+        self._attr_native_min_value = low
+        self._attr_native_max_value = high
+
+    @property
+    def native_value(self) -> int:
+        return self.draft.selected_pixel["count"] if self.key == "count" else getattr(self.draft, self.key)
+
+    async def async_set_native_value(self, value: float) -> None:
+        self.edit_draft("set_number", self.key, value)
+
+
+class TrimlightEffectLengthNumber(TrimlightEntity, NumberEntity):
+    _attr_name = "Trimlight Effect Length"
+    _attr_native_min_value = 1
+    _attr_native_max_value = 90
+    _attr_native_step = 1
+    _attr_mode = NumberMode.SLIDER
+    _attr_icon = "mdi:arrow-expand-horizontal"
+
+    def __init__(self, hass: HomeAssistant, entry_id: str, coordinator) -> None:
+        super().__init__(hass, entry_id, coordinator)
+        self._attr_unique_id = f"{entry_id}_effect_length"
+
+    @property
+    def available(self) -> bool:
+        return builtin_control_available(self)
+
+    @property
+    def native_value(self) -> int | None:
+        return ((self.coordinator.data or {}).get("current_effect") or {}).get("pixelLen")
+
+    async def async_set_native_value(self, value: float) -> None:
+        from homeassistant.exceptions import HomeAssistantError
+
+        if not 1 <= value <= 90 or int(value) != value:
+            raise HomeAssistantError("Effect length must be a whole number between 1 and 90")
+        await async_update_builtin(self, pixel_len=int(value))
 
 
 class TrimlightSpeedNumber(TrimlightEntity, NumberEntity):
@@ -300,3 +357,4 @@ class TrimlightSpeedNumber(TrimlightEntity, NumberEntity):
         )
 
         self._schedule_verification_refresh()
+

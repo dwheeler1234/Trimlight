@@ -6,6 +6,7 @@ from typing import Any
 from .api import TrimlightApi
 from .data import TrimlightData
 from .debug import async_log_event
+from .controls import require_success
 from .effects import (
     find_builtin_preset,
     find_builtin_preset_by_name,
@@ -88,6 +89,16 @@ async def apply_effect_update(
     effect_id = (coordinator_data or {}).get("current_effect_id")
     category = (coordinator_data or {}).get("current_effect_category")
     effects = coordinator_data.get("effects") or []
+
+    # An unsaved preview must stay unsaved, even if its pixels match a saved preset.
+    if effect_id == -1 and category in (1, 2) and current_effect:
+        response = await api.preview_effect(current_effect, brightness, speed=speed)
+        require_success(response)
+        _optimistically_apply_effect_update(
+            data, coordinator_data, current_effect,
+            effect_id=-1, brightness=brightness, speed=speed,
+        )
+        return
 
     async def _apply_builtin_match(
         match: dict[str, Any],
@@ -378,3 +389,4 @@ async def apply_effect_update(
             )
             return
         await _apply_builtin_match(match, matched_via="current_state")
+

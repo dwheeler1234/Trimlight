@@ -16,6 +16,7 @@ from .const import CUSTOM_EFFECT_MODES, FORCED_ON_GRACE_SECONDS
 from .data import get_data
 from .debug import async_log_event
 from .entity import TrimlightEntity
+from .editor import PatternEditorEntity
 from .effects import (
     find_builtin_preset,
     find_builtin_preset_by_name,
@@ -161,8 +162,70 @@ async def async_setup_entry(
             TrimlightBuiltInSelect(hass, entry.entry_id, coordinator),
             TrimlightCustomSelect(hass, entry.entry_id, coordinator),
             TrimlightCustomModeSelect(hass, entry.entry_id, coordinator),
+            PatternModeSelect(hass, entry.entry_id, coordinator),
+            PatternSourceSelect(hass, entry.entry_id, coordinator),
         ]
     )
+
+
+class PatternSourceSelect(PatternEditorEntity, SelectEntity):
+    """Load a saved definition into the draft without running it on the lights."""
+    _attr_name = "Trimlight Pattern Source"
+
+    def __init__(self, hass, entry_id, coordinator) -> None:
+        super().__init__(hass, entry_id, coordinator)
+        self._attr_unique_id = f"{entry_id}_pattern_source"
+
+    def _choices(self) -> dict[str, dict]:
+        presets = (self.coordinator.data or {}).get("custom_effects") or self._data.custom_cache
+        return {f"{p.get('name') or 'Unnamed'} (id {p['id']})": p for p in presets
+                if isinstance(p.get("id"), int) and p["id"] >= 0}
+
+    @property
+    def options(self) -> list[str]:
+        return ["New Pattern", *self._choices()]
+
+    @property
+    def current_option(self) -> str:
+        return next((name for name, p in self._choices().items()
+                     if p["id"] == self.draft.source_id), "New Pattern")
+
+    async def async_select_option(self, option: str) -> None:
+        from homeassistant.exceptions import HomeAssistantError
+        from .pattern import PatternDraft
+
+        if option == "New Pattern":
+            self.new_pattern()
+            return
+        source = self._choices().get(option)
+        if source is None:
+            raise HomeAssistantError("The selected saved pattern is no longer available")
+        try:
+            self._data.pattern_draft = PatternDraft.from_effect(source)
+        except ValueError as exc:
+            raise HomeAssistantError(str(exc)) from exc
+        self.notify_draft()
+
+
+class PatternModeSelect(PatternEditorEntity, SelectEntity):
+    _attr_name = "Trimlight Pattern Mode"
+    _attr_options = [CUSTOM_EFFECT_MODES[i] for i in range(17)]
+
+    def __init__(self, hass, entry_id, coordinator) -> None:
+        super().__init__(hass, entry_id, coordinator)
+        self._attr_unique_id = f"{entry_id}_pattern_mode"
+
+    @property
+    def current_option(self) -> str:
+        return CUSTOM_EFFECT_MODES[self.draft.mode]
+
+    async def async_select_option(self, option: str) -> None:
+        from homeassistant.exceptions import HomeAssistantError
+
+        choices = {CUSTOM_EFFECT_MODES[i]: i for i in range(17)}
+        if option not in choices:
+            raise HomeAssistantError("Choose a documented custom pattern mode")
+        self.edit_draft("set_number", "mode", choices[option])
 
 
 class TrimlightBuiltInSelect(TrimlightEntity, SelectEntity):
@@ -1254,3 +1317,4 @@ class TrimlightCustomModeSelect(TrimlightEntity, SelectEntity):
             response=response,
         )
         self._schedule_verification_refresh()
+

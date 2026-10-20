@@ -1,0 +1,33 @@
+# Paste into a manual Home Assistant dashboard card.
+# Replace entity IDs if Home Assistant assigned suffixes for your controller.
+type: vertical-stack
+cards:
+  - type: entities
+    title: Trimlight Pattern Editor
+    show_header_toggle: false
+    entities:
+      - button.trimlight_new_pattern
+      - button.trimlight_load_current_pattern
+      - text.trimlight_pattern_name
+      - select.trimlight_pattern_mode
+      - number.trimlight_pattern_speed
+      - number.trimlight_pattern_brightness
+      - number.trimlight_pattern_entry
+      - number.trimlight_pattern_pixel_count
+      - switch.trimlight_pattern_entry_disabled
+  - type: light
+    entity: light.trimlight_pattern_entry_color
+    name: Selected entry color (draft only)
+  - type: markdown
+    title: Draft entries
+    content: |-
+      {% set pixels = state_attr('text.trimlight_pattern_name', 'pixels') or [] -%}
+      | Entry | Color | Count | Disabled |
+      | --- | --- | --- | --- |
+      {% for p in pixels if p.count | int > 0 %}| {{ p.index }} | <font color="#{{ '%06X' | format(p.color | int) }}">●</font> #{{ '%06X' | format(p.color | int) }} | {{ p.count }} | {{ p.disable }} |
+      {% endfor %}
+  - type: entities
+    show_header_toggle: false
+    entities:
+      - button.trimlight_preview_pattern
+      - button.trimlight_save_new_pattern

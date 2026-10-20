@@ -10,6 +10,7 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 from .api import TrimlightApi
 from .const import DEFAULT_POLL_INTERVAL_SECONDS
 from .effects import normalize_custom_effects, normalize_effect_mode
+from .controls import require_success
 
 
 def _is_placeholder_off_state(
@@ -56,6 +57,7 @@ class TrimlightCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     async def _async_update_data(self) -> dict[str, Any]:
         try:
             data = await self._api.get_device_detail()
+            require_success(data)
         except Exception as exc:  # noqa: BLE001
             raise UpdateFailed(str(exc)) from exc
 
@@ -111,3 +113,4 @@ class TrimlightCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "brightness": brightness,
             "switch_state": switch_state,
         }
+

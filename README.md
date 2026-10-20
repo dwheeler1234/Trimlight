@@ -9,6 +9,10 @@ This is a custom integration, not an official Home Assistant integration.
 
 ## Features
 
+- Custom pattern draft editor with 30 entries, RGB colors, pixel counts, disabled entries, animation mode, preview, and save-as-new
+- RGB color picker on `light.trimlight` (temporary solid-color preview)
+- `number.trimlight_effect_length` for built-in pattern length (1-90)
+- `switch.trimlight_reverse_animation` for built-in animation direction
 - UI-based setup through Home Assistant config flow
 - `light.trimlight` for power and brightness
 - `select.trimlight_built_in_preset` for built-in animations
@@ -198,6 +202,145 @@ Preset cache data is stored in Home Assistant storage and also written as a read
 If built-in presets are not returned by the controller, the integration falls back to the static built-in preset list bundled with the integration.
 
 ## Automation Examples
+
+### Custom Pattern Editor
+
+The [Trimlight-style custom card](www/trimlight-pattern-card.js) follows the app's
+layout: a circular color palette, six-column pattern grid with counts inside the
+circles, an expandable 30-entry view, a pattern dropdown, animation mode, and
+brightness/speed sliders. Backgrounds, panels, text, borders, and accents inherit
+the active Home Assistant theme. Circle fills show the actual RGB pattern colors.
+The UI numbers entries 1-30; their underlying API indexes are 0-29.
+
+To install the matching card:
+
+1. Copy `www/trimlight-pattern-card.js` into your Home Assistant configuration
+   folder at `www/trimlight-pattern-card.js`.
+2. Add `/local/trimlight-pattern-card.js?v=3` under **Settings > Dashboards >
+   Resources** as a **JavaScript module**. If the Resources menu is hidden, enable
+   Advanced Mode in your user profile. Restart Home Assistant once if you just
+   created the `www` folder, then reload the browser.
+3. Paste [this card configuration](docs/trimlight-pattern-card.yaml) into a manual
+   dashboard card. Use its `entities` overrides for renamed entities or additional
+   controllers.
+
+The custom card requires the editor backend in this integration; installing the
+JavaScript file alone does not create the entities. It runs without external
+JavaScript dependencies or a separate frontend plugin. The palette includes
+warm-white and black as RGB values; it does not add a dedicated white channel.
+Selecting a color for an empty entry gives it a count of one. **X** disables the
+selected entry. The pattern dropdown loads a saved definition locally and never
+starts it on the lights.
+
+Click a position circle to select it and open a themed pixel-count dialog. Enter
+a whole number from 0 to 60 and press **Save**, or cancel/Escape to keep its count.
+The dialog preserves typed input during incoming state updates. Palette choices
+still apply to the selected position after closing the dialog.
+
+The **Pattern name** dropdown loads existing patterns into the draft. **New**
+prompts for a name before starting a fresh draft, and **Save new** prompts for the
+name of the saved copy. Cancelling either prompt leaves the draft and saved
+patterns unchanged. The current draft name is displayed below the position grid.
+
+The palette has four rows of seven circles. The top three rows always remain
+visible; its expand/collapse arrow shows or hides only the fourth row, initially hidden.
+The two rightmost circles in row two and all circles in the bottom two rows are
+16 custom-color slots. Tap a custom circle to apply its color; tap its pencil
+to choose a new RGB color and apply it to the selected pattern position. Custom
+colors persist in this browser's local storage, separately for each configured
+pattern-name entity. They are not shared between browsers/devices; if browser
+storage is disabled they remain available only in memory for this card session.
+
+For a standard-card alternative, use the [entity-based dashboard card](docs/custom-pattern-editor.yaml),
+which needs no JavaScript resource.
+
+1. Press **New Pattern**, or select a saved custom preset with the existing
+   custom-preset selector, wait for selection to finish, and press **Load Current Pattern**.
+2. Enter a name and choose the draft animation mode, speed and brightness.
+3. Choose **Pattern Entry** (0-29). Set **Pixel Count** (0-60), choose its RGB
+   color, and toggle **Entry Disabled**. Repeat for the other entries.
+4. Press **Preview Pattern** to turn on the controller in manual mode and run
+   the draft without saving it.
+5. Press **Save New Pattern** to create a new saved preset. Select that preset
+   with the existing custom-preset selector when you want to run the saved copy.
+
+Editing fields, starting a new draft, and loading a pattern do not control the
+lights. The draft color-picker's power toggle only enables/disables the selected
+entry; its brightness slider changes the whole draft's brightness. A zero count
+omits an entry's contribution, while disabled entries retain their counts and
+colors for editing. Indexes identify pattern entries, not individual physical
+roof pixels or independent zones. At least one enabled, nonzero entry is needed
+for preview/save. The mode selector uses the documented modes 0-16.
+
+Each **Save New Pattern** press requests a new saved preset (the controller allows
+up to 60 saved effects). It does not overwrite the source, even if the name is
+unchanged or `Commit custom presets` is enabled. Saving alone does not turn on or
+run the saved copy. A save error is reported without adding a local preset; if
+the controller accepts a save without returning its ID, refresh the preset list
+before trying again. A network timeout can likewise leave the save outcome
+unknown; check the controller before retrying to avoid duplicate copies.
+
+Drafts are per controller and stay separate from incoming state polls. They are
+held in memory and reset on integration reload/restart. The pattern name entity
+exposes `pixels`, `mode`, `speed`, `brightness`, `selected_index`, and
+`last_saved_id` attributes for dashboard previews and automations. For offline
+editor regression tests, run `python tools/test_pattern_editor.py`.
+Run `node tools/test_pattern_card_logic.cjs` for offline card-logic checks. For
+browser/layout checks on a development machine with Playwright and a browser
+installed, run `node tools/test_pattern_card.cjs` (or add `--channel=msedge` on
+Windows). Browser tests use a simulated `hass` object and do not control real lights.
+`node tools/build_pattern_preview.cjs` creates a standalone HTML preview with
+sample state and light/dark theme buttons.
+
+### Choose A Solid Color
+
+```yaml
+action: light.turn_on
+target:
+  entity_id: light.trimlight
+data:
+  rgb_color: [255, 80, 0]
+  brightness_pct: 70
+```
+
+Choosing a color replaces the running effect with a temporary static custom preview.
+It does not overwrite a saved preset, even with `Commit custom presets` enabled.
+Brightness/speed changes to an unsaved custom preview keep it unsaved. Select a
+built-in or saved custom preset to return to an animation. RGB state is reported
+only when the active static custom pattern has one enabled color throughout;
+multicolor patterns and built-in effects have no single reported RGB color.
+
+### Adjust A Built-In Animation
+
+After selecting a built-in preset and allowing its verification to finish:
+
+```yaml
+action: number.set_value
+target:
+  entity_id: number.trimlight_effect_length
+data:
+  value: 40
+```
+
+```yaml
+action: switch.turn_on
+target:
+  entity_id: switch.trimlight_reverse_animation
+```
+
+These two controls are available only for a settled built-in effect running in
+manual mode. They preserve its mode, speed, brightness and other parameter.
+Changes use preview and do not overwrite a saved effect. They are unavailable
+while off, in timer mode, during a pending preset transition, or while a custom
+effect runs. Actual visual direction/length behavior depends on the animation.
+Entity IDs may have suffixes if several controllers are configured.
+
+### Offline Feature Tests
+
+Run `python tools/test_feature_controls.py` with Python 3.11 or newer. The tests
+exercise real feature logic with mocked Home Assistant interfaces and API
+responses; they do not contact a controller. Full Home Assistant loading and
+physical-controller behavior still require validation before deployment.
 
 ### Turn On And Select A Custom Preset
 
@@ -402,3 +545,4 @@ The repository includes Trimlight EDGE API reference material in [`docs`](docs).
 ## License
 
 MIT License. See [`LICENSE`](LICENSE).
+

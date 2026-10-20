@@ -1,0 +1,16 @@
+type: custom:trimlight-pattern-card
+title: Trimlight
+# Override individual entity IDs when Home Assistant assigns a suffix.
+# entities:
+#   name: text.trimlight_pattern_name_2
+#   source: select.trimlight_pattern_source_2
+#   mode: select.trimlight_pattern_mode_2
+#   entry: number.trimlight_pattern_entry_2
+#   count: number.trimlight_pattern_pixel_count_2
+#   brightness: number.trimlight_pattern_brightness_2
+#   speed: number.trimlight_pattern_speed_2
+#   color: light.trimlight_pattern_entry_color_2
+#   disabled: switch.trimlight_pattern_entry_disabled_2
+#   preview: button.trimlight_preview_pattern_2
+#   save: button.trimlight_save_new_pattern_2
+#   new: button.trimlight_new_pattern_2

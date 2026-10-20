@@ -9,6 +9,7 @@ from .const import build_builtin_presets_from_effects, build_builtin_presets_sta
 from .data import get_data
 from .debug import async_log_event
 from .entity import TrimlightEntity
+from .editor import PatternEditorEntity
 
 
 async def async_setup_entry(
@@ -16,7 +17,32 @@ async def async_setup_entry(
 ) -> None:
     data = get_data(hass, entry.entry_id)
     coordinator = data.coordinator
-    async_add_entities([TrimlightRefreshButton(hass, entry.entry_id, coordinator)])
+    async_add_entities([
+        TrimlightRefreshButton(hass, entry.entry_id, coordinator),
+        *[PatternButton(hass, entry.entry_id, coordinator, action, label)
+          for action, label in (("new_pattern", "New Pattern"),
+                                ("load_current_pattern", "Load Current Pattern"),
+                                ("preview_pattern", "Preview Pattern"),
+                                ("save_new_pattern", "Save New Pattern"))],
+    ])
+
+
+class PatternButton(PatternEditorEntity, ButtonEntity):
+    def __init__(self, hass, entry_id, coordinator, action, label) -> None:
+        super().__init__(hass, entry_id, coordinator)
+        self.action = action
+        self._attr_name = f"Trimlight {label}"
+        self._attr_unique_id = f"{entry_id}_{action}"
+
+    @property
+    def available(self) -> bool:
+        return self.action not in ("preview_pattern", "save_new_pattern") or self.coordinator.last_update_success
+
+    async def async_press(self) -> None:
+        if self.action in ("preview_pattern", "save_new_pattern"):
+            await getattr(self, self.action)()
+        else:
+            getattr(self, self.action)()
 
 
 class TrimlightRefreshButton(TrimlightEntity, ButtonEntity):
@@ -53,3 +79,4 @@ class TrimlightRefreshButton(TrimlightEntity, ButtonEntity):
             builtins_count=len(data.builtins),
             custom_count=len((data.coordinator.data or {}).get("custom_effects") or data.custom_cache),
         )
+

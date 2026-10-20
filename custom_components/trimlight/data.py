@@ -11,6 +11,7 @@ from .api import TrimlightApi
 from .const import DOMAIN
 from .coordinator import TrimlightCoordinator
 from .models import BuiltinPreset, Effect, Pixel
+from .pattern import PatternDraft
 
 
 @dataclass(slots=True)
@@ -58,7 +59,10 @@ class TrimlightData:
     pending_speed: int | None = None
     pending_speed_until: float | None = None
     debug_log_lock: asyncio.Lock = field(default_factory=asyncio.Lock)
+    pattern_draft: PatternDraft = field(default_factory=PatternDraft)
+    pattern_lock: asyncio.Lock = field(default_factory=asyncio.Lock)
 
 
 def get_data(hass: HomeAssistant, entry_id: str) -> TrimlightData:
     return cast(TrimlightData, hass.data[DOMAIN][entry_id])
+
