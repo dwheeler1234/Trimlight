@@ -7,6 +7,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .data import get_data
 from .entity import TrimlightEntity
+from .controls import solid_rgb
 from .effects import (
     find_builtin_preset,
     find_builtin_preset_by_name,
@@ -48,6 +49,8 @@ class TrimlightCurrentPresetSensor(TrimlightEntity, SensorEntity):
             return "Off"
 
         current_effect = data.get("current_effect") or {}
+        if data.get("current_effect_id") == -1 and solid_rgb(current_effect) is not None:
+            return "Solid Color"
         effect_id = self._safe_int(data.get("current_effect_id"))
         current_category = data.get("current_effect_category")
         current_mode = get_effect_mode(current_effect)
@@ -163,6 +166,18 @@ class TrimlightCurrentPresetSensor(TrimlightEntity, SensorEntity):
     def extra_state_attributes(self) -> dict:
         data = self.coordinator.data or {}
         current_effect = data.get("current_effect") or {}
+        # Preview data must not be replaced by a saved preset with matching pixels.
+        if data.get("current_effect_id") == -1:
+            return {
+                "current_effect_id": -1,
+                "current_effect_category": current_effect.get("category"),
+                "current_effect_mode": get_effect_mode(current_effect),
+                "current_effect_speed": current_effect.get("speed"),
+                "current_effect_brightness": current_effect.get("brightness"),
+                "current_effect_pixel_len": current_effect.get("pixelLen"),
+                "current_effect_reverse": current_effect.get("reverse"),
+                "current_effect_pixels": current_effect.get("pixels"),
+            }
         mode = get_effect_mode(current_effect)
         effect_id = self._safe_int(data.get("current_effect_id"))
         current_category = data.get("current_effect_category")
@@ -310,3 +325,4 @@ class TrimlightCurrentPresetSensor(TrimlightEntity, SensorEntity):
             "current_effect_reverse": current_effect.get("reverse"),
             "current_effect_pixels": pixels,
         }
+
