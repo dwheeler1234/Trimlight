@@ -237,6 +237,11 @@ a whole number from 0 to 60 and press **Save**, or cancel/Escape to keep its cou
 The dialog preserves typed input during incoming state updates. Palette choices
 still apply to the selected position after closing the dialog.
 
+The **Pattern name** dropdown loads existing patterns into the draft. **New**
+prompts for a name before starting a fresh draft, and **Save new** prompts for the
+name of the saved copy. Cancelling either prompt leaves the draft and saved
+patterns unchanged. The current draft name is displayed below the position grid.
+
 The palette has four rows of seven circles. The top three rows always remain
 visible; its expand/collapse arrow shows or hides only the fourth row, initially hidden.
 The two rightmost circles in row two and all circles in the bottom two rows are
