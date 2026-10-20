@@ -70,11 +70,11 @@ async function main() {
     const card = page.locator("trimlight-pattern-card");
     await card.locator(".grid .entry").first().waitFor();
     assert.equal(await card.locator(".grid .entry").count(), 6);
-    assert.equal(await card.locator(".palette .swatch").count(), 20);
+    assert.equal(await card.locator(".palette .swatch").count(), 28);
     assert.equal(await card.locator("ha-card").evaluate((el) => getComputedStyle(el).backgroundColor), "rgb(24, 28, 36)");
     await page.screenshot({path:path.join(output, "trimlight-editor-dark-collapsed.png"), fullPage:true});
 
-    await card.locator(".expand").click();
+    await card.locator(".expand:not(.palette-toggle)").click();
     assert.equal(await card.locator(".grid .entry").count(), 30);
     await page.screenshot({path:path.join(output, "trimlight-editor-dark-expanded.png"), fullPage:true});
     await card.locator('[data-entry="7"]').click();
