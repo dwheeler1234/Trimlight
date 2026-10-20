@@ -25,7 +25,7 @@ class TrimlightPatternCard extends HTMLElement {
     super();
     this.attachShadow({mode: "open"});
     this._expanded = false;
-    this._paletteExpanded = true;
+    this._paletteExpanded = false;
     this._customColors = [...CUSTOM_COLORS];
     this._busy = false;
     this._waiters = new Set();
@@ -161,7 +161,8 @@ class TrimlightPatternCard extends HTMLElement {
       return `<div class="custom-cell"><button type="button" class="swatch" data-color="${color}" style="--bulb:${color};--ink:${ink(color)}" aria-label="Apply custom color ${slot + 1}" title="Custom color ${slot + 1}" ${disabled}></button><label class="custom-edit" title="Edit custom color ${slot + 1}">✎<input type="color" data-custom-slot="${slot}" aria-label="Edit custom color ${slot + 1}" value="${color}" ${disabled}></label></div>`;
     };
     const swatches = PALETTE.map(fixedSwatch).join("") + customSwatch(0) + customSwatch(1);
-    const extras = this._paletteExpanded ? Array.from({length:14}, (_, i) => customSwatch(i + 2)).join("") : "";
+    const extras = Array.from({length:7}, (_, i) => customSwatch(i + 2)).join("")
+      + (this._paletteExpanded ? Array.from({length:7}, (_, i) => customSwatch(i + 9)).join("") : "");
     const optionList = (key) => (this._state(key)?.attributes.options || []).map((value) => `<option value="${esc(value)}" ${value === this._value(key) ? "selected" : ""}>${esc(value)}</option>`).join("");
     const range = (key, icon, label) => {
       const value = Math.max(0, Math.min(255, Number(this._value(key)) || 0));
@@ -193,7 +194,7 @@ class TrimlightPatternCard extends HTMLElement {
     </style><ha-card><div class="body">
       <div><div class="title">${esc(this._config.title || "Trimlight")} <ha-icon icon="mdi:palette-outline"></ha-icon></div><div class="subtitle">Custom pattern editor</div></div>
       ${missing.length ? `<p class="message error">Missing editor entities: ${esc(missing.map((key) => this._config.entities[key]).join(", "))}</p>` : ""}
-      <div class="panel palette">${swatches}${extras}<button class="expand palette-toggle" aria-label="${this._paletteExpanded ? "Collapse color palette" : "Expand custom colors"}" aria-expanded="${this._paletteExpanded}">${this._paletteExpanded ? "⌃" : "⌄"}</button><p class="palette-note">Choose a color for entry ${index + 1} · ✎ edits custom colors</p></div>
+      <div class="panel palette">${swatches}${extras}<button class="expand palette-toggle" aria-label="${this._paletteExpanded ? "Hide fourth color row" : "Show fourth color row"}" aria-expanded="${this._paletteExpanded}">${this._paletteExpanded ? "⌃" : "⌄"}</button><p class="palette-note">Choose a color for entry ${index + 1} · ✎ edits custom colors</p></div>
       <div class="panel"><select class="source" data-select="source" aria-label="Load saved pattern into draft" ${disabled}>${optionList("source")}</select>
         <div class="grid">${pixels.slice(0, this._expanded ? 30 : 6).map((p) => {
           const color = p.count ? hex(p.color) : "#000000";
