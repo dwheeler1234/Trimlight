@@ -6,8 +6,9 @@ const vm = require("node:vm");
 
 class ShadowRoot {
   constructor() { this.innerHTML = ""; }
-  querySelector() { return {}; }
+  querySelector() { return {focus(){}}; }
   querySelectorAll() { return []; }
+  append(element) { this.appended = element; }
 }
 class Element {
   attachShadow() { this.shadowRoot = new ShadowRoot(); }
@@ -23,6 +24,17 @@ card.setConfig({type:"custom:trimlight-pattern-card"});
 const fixture = fs.readFileSync(path.join(__dirname, "test_pattern_card.cjs"), "utf8");
 const setup = fixture.match(/await page\.evaluate\(\(\) => \{([\s\S]*?)\n    \}\);/)[1];
 context.document = {querySelector:() => card};
+context.document.createElement = () => {
+  const listeners = {};
+  const input = {focus(){}, select(){}, reportValidity:() => true};
+  const cancel = {}, form = {};
+  return {open:false, setAttribute(){}, remove(){},
+    addEventListener:(name, handler) => {listeners[name] = handler;},
+    querySelector:(selector) => selector === "input" ? input : selector === "form" ? form : cancel,
+    showModal(){this.open = true;},
+    close(){this.open = false; listeners.close?.();},
+  };
+};
 context.structuredClone = structuredClone;
 vm.runInContext(setup, context);
 
@@ -33,8 +45,27 @@ async function main() {
   assert.match(card.shadowRoot.innerHTML, /grid-template-columns:repeat\(6/);
   assert.match(card.shadowRoot.innerHTML, /background:var\(--ha-card-background,var\(--card-background-color\)\)/);
   assert.match(card.shadowRoot.innerHTML, /background:var\(--secondary-background-color\)/);
-  await card._setNumber("entry", 7);
-  assert.equal(Number(card._value("entry")), 7);
+  assert.equal(card.shadowRoot.innerHTML.includes("data-count"), false);
+  await card._openEntry(7);
+  assert.equal(card._countDialog.open, true);
+  assert.match(card._countDialog.innerHTML, /Position 8/);
+  const openDialog = card._countDialog;
+  card._render();
+  assert.equal(card._countDialog, openDialog);
+  openDialog.querySelector("input").valueAsNumber = 5;
+  openDialog.querySelector("form").onsubmit({preventDefault(){}});
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(card._pixel().count, 5);
+  assert.equal(card._countDialog, null);
+  await card._openEntry(8);
+  card._countDialog.querySelector("[data-cancel]").onclick();
+  assert.equal(card._pixel().count, 0);
+  assert.equal(card._countDialog, null);
+  await card._saveEntryCount(8, 61);
+  assert.match(card._error, /0 to 60/);
+  assert.equal(card._pixel().count, 0);
+  await card._setNumber("entry", 9);
+  assert.equal(Number(card._value("entry")), 9);
   await card._applyColor("#ff0000");
   assert.equal(card._pixel().color, 0xff0000);
   assert.equal(card._pixel().count, 1);
