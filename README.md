@@ -237,7 +237,8 @@ a whole number from 0 to 60 and press **Save**, or cancel/Escape to keep its cou
 The dialog preserves typed input during incoming state updates. Palette choices
 still apply to the selected position after closing the dialog.
 
-The palette has four rows of seven circles and its own expand/collapse arrow.
+The palette has four rows of seven circles. The top three rows always remain
+visible; its expand/collapse arrow shows or hides only the fourth row, initially hidden.
 The two rightmost circles in row two and all circles in the bottom two rows are
 16 custom-color slots. Tap a custom circle to apply its color; tap its pencil
 to choose a new RGB color and apply it to the selected pattern position. Custom
