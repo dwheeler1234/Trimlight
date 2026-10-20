@@ -12,6 +12,7 @@ from .controls import async_update_builtin, builtin_control_available
 from .data import get_data
 from .entity import TrimlightEntity
 from .editor import PatternEditorEntity
+from .scheduling import SchedulingController
 
 
 async def async_setup_entry(
@@ -21,7 +22,28 @@ async def async_setup_entry(
     async_add_entities([
         TrimlightReverseSwitch(hass, entry.entry_id, data.coordinator),
         PatternDisabledSwitch(hass, entry.entry_id, data.coordinator),
+        *[TrimlightDailyScheduleSwitch(hass, entry.entry_id, data.coordinator, slot) for slot in range(2)],
     ])
+
+
+class TrimlightDailyScheduleSwitch(TrimlightEntity, SwitchEntity):
+    def __init__(self, hass, entry_id, coordinator, slot):
+        super().__init__(hass, entry_id, coordinator)
+        self.slot = slot
+        self._attr_name = f"Trimlight Daily Schedule {slot + 1}"
+        self._attr_unique_id = f"{entry_id}_daily_schedule_{slot}"
+
+    @property
+    def is_on(self):
+        daily = ((self.coordinator.data or {}).get("payload") or {}).get("daily") or []
+        record = next((p for p in daily if p.get("id") == self.slot), None)
+        return record.get("enable") if record else None
+
+    async def async_turn_on(self, **kwargs):
+        await SchedulingController(self._data).execute("enable_daily_schedule", {"schedule_id": self.slot, "enabled": True})
+
+    async def async_turn_off(self, **kwargs):
+        await SchedulingController(self._data).execute("enable_daily_schedule", {"schedule_id": self.slot, "enabled": False})
 
 
 class PatternDisabledSwitch(PatternEditorEntity, SwitchEntity):
