@@ -21,7 +21,7 @@ from .data import TrimlightData
 from .debug import async_log_event, get_debug_log_path
 from .storage import get_debug_cache_path, load_preset_cache, setup_preset_cache_listener
 
-PLATFORMS: list[str] = ["light", "select", "button", "sensor", "number", "switch"]
+PLATFORMS: list[str] = ["light", "select", "button", "sensor", "number", "switch", "text"]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
