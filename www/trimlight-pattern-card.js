@@ -144,10 +144,48 @@ class TrimlightPatternCard extends HTMLElement {
     dialog.querySelector("input").select();
   }
 
+  async _runNamedAction(action, name) {
+    await this._perform(async () => {
+      const value = name.trim();
+      if (!value || value.length > 64) throw new Error("Enter a pattern name from 1 to 64 characters.");
+      if (action === "new") {
+        await this._call("new", "press");
+        await this._confirmed(() => this._value("name") === "New Pattern");
+      }
+      await this._call("name", "set_value", {value}, () => this._value("name") === value);
+      if (action === "save") await this._call("save", "press");
+    }, action === "save" ? "Saved a new pattern copy." : "New named draft created.");
+  }
+
+  _showNameDialog(action) {
+    const dialog = document.createElement("dialog");
+    const saving = action === "save";
+    dialog.setAttribute("aria-labelledby", "pattern-name-title");
+    dialog.innerHTML = `<form><h3 id="pattern-name-title">${saving ? "Save new pattern" : "New pattern"}</h3><label>Pattern name<input type="text" name="patternName" minlength="1" maxlength="64" required value="${esc(saving ? this._value("name") : "New Pattern")}"></label><p class="hint">${saving ? "Creates a saved copy without overwriting an existing pattern." : "Creates a new draft. Your lights stay unchanged."}</p><div class="actions"><button type="button" data-cancel>Cancel</button><button type="submit" class="primary">${saving ? "Save" : "Create"}</button></div></form>`;
+    this._patternNameDialog = dialog;
+    this.shadowRoot.append(dialog);
+    dialog.addEventListener("close", () => {
+      this._patternNameDialog = null; dialog.remove(); this._render();
+      this.shadowRoot.querySelector(`[data-action="${action}"]`)?.focus();
+    });
+    dialog.querySelector("[data-cancel]").onclick = () => dialog.close();
+    dialog.querySelector("form").onsubmit = (event) => {
+      event.preventDefault();
+      const input = dialog.querySelector("input");
+      if (!input.reportValidity() || !input.value.trim()) return;
+      const name = input.value;
+      dialog.close();
+      this._runNamedAction(action, name);
+    };
+    dialog.showModal();
+    dialog.querySelector("input").focus();
+    dialog.querySelector("input").select();
+  }
+
   _render() {
     if (!this._config || !this._hass) return;
     // Keep an in-progress count intact when Home Assistant sends state updates.
-    if (this._countDialog?.open) return;
+    if (this._countDialog?.open || this._patternNameDialog?.open) return;
     const attrs = this._attributes();
     const index = Number(this._value("entry")) || 0;
     const pixel = this._pixel();
@@ -163,7 +201,13 @@ class TrimlightPatternCard extends HTMLElement {
     const swatches = PALETTE.map(fixedSwatch).join("") + customSwatch(0) + customSwatch(1);
     const extras = Array.from({length:7}, (_, i) => customSwatch(i + 2)).join("")
       + (this._paletteExpanded ? Array.from({length:7}, (_, i) => customSwatch(i + 9)).join("") : "");
-    const optionList = (key) => (this._state(key)?.attributes.options || []).map((value) => `<option value="${esc(value)}" ${value === this._value(key) ? "selected" : ""}>${esc(value)}</option>`).join("");
+    const optionList = (key) => {
+      const draftLabel = key === "source" && this._value(key) === "New Pattern"
+        ? `<option value="" selected disabled>${esc(this._value("name"))} (draft)</option>` : "";
+      return draftLabel + (this._state(key)?.attributes.options || [])
+        .filter((value) => key !== "source" || value !== "New Pattern")
+        .map((value) => `<option value="${esc(value)}" ${value === this._value(key) ? "selected" : ""}>${esc(value)}</option>`).join("");
+    };
     const range = (key, icon, label) => {
       const value = Math.max(0, Math.min(255, Number(this._value(key)) || 0));
       return `<label class="range-row"><ha-icon icon="${icon}" aria-hidden="true"></ha-icon><input aria-label="${label}" data-range="${key}" type="range" min="0" max="255" value="${value}" style="--fill:${value / 255 * 100}%" ${disabled}><output>${Math.round(value / 255 * 100)}%</output></label>`;
@@ -195,14 +239,14 @@ class TrimlightPatternCard extends HTMLElement {
       <div><div class="title">${esc(this._config.title || "Trimlight")} <ha-icon icon="mdi:palette-outline"></ha-icon></div><div class="subtitle">Custom pattern editor</div></div>
       ${missing.length ? `<p class="message error">Missing editor entities: ${esc(missing.map((key) => this._config.entities[key]).join(", "))}</p>` : ""}
       <div class="panel palette">${swatches}${extras}<button class="expand palette-toggle" aria-label="${this._paletteExpanded ? "Hide fourth color row" : "Show fourth color row"}" aria-expanded="${this._paletteExpanded}">${this._paletteExpanded ? "⌃" : "⌄"}</button><p class="palette-note">Choose a color for entry ${index + 1} · ✎ edits custom colors</p></div>
-      <div class="panel"><select class="source" data-select="source" aria-label="Load saved pattern into draft" ${disabled}>${optionList("source")}</select>
+      <div class="panel"><label class="hint">Pattern name<select class="source" data-select="source" aria-label="Pattern name" ${disabled}>${optionList("source")}</select></label>
         <div class="grid">${pixels.slice(0, this._expanded ? 30 : 6).map((p) => {
           const color = p.count ? hex(p.color) : "#000000";
           return `<button class="entry ${p.index === index ? "selected" : ""} ${p.disable ? "off" : ""}" data-entry="${p.index}" style="--bulb:${color};--ink:${ink(color)}" aria-label="Entry ${p.index + 1}: ${p.count} pixels${p.disable ? ", disabled" : ""}" aria-pressed="${p.index === index}" ${disabled}>${Number(p.count) || 0}</button>`;
         }).join("")}</div>
         <button class="expand" aria-label="${this._expanded ? "Collapse pattern" : "Show all 30 entries"}" aria-expanded="${this._expanded}">${this._expanded ? "⌃" : "⌄"}</button>
         <p class="hint">Tap a position to edit its pixel count.</p>
-        <div class="edit-row"><label>Pattern name<input type="text" data-name maxlength="64" value="${esc(this._value("name"))}" ${disabled}></label></div>
+        <p class="hint">Draft: ${esc(this._value("name"))}</p>
         <label class="disabled-toggle"><input type="checkbox" data-disabled ${pixel.disable ? "checked" : ""} ${disabled}>Disable selected entry</label>
       </div>
       <div class="panel"><select class="mode" data-select="mode" aria-label="Pattern animation mode" ${disabled}>${optionList("mode")}</select>${range("brightness", "mdi:brightness-6", "Pattern brightness")}${range("speed", "mdi:speedometer", "Pattern speed")}</div>
@@ -223,10 +267,6 @@ class TrimlightPatternCard extends HTMLElement {
       const slot = Number(el.dataset.customSlot), color = el.value;
       this._perform(async () => { this._setCustomColor(slot, color); await this._applyColor(color); });
     }; });
-    root.querySelector("[data-name]").onchange = (event) => {
-      const value = event.target.value.trim();
-      this._perform(() => this._call("name", "set_value", {value}, () => this._value("name") === value));
-    };
     root.querySelector("[data-disabled]").onchange = (event) => { const value = event.target.checked; this._perform(() => this._call("disabled", value ? "turn_on" : "turn_off", {}, () => Boolean(this._pixel().disable) === value)); };
     root.querySelectorAll("[data-select]").forEach((el) => { el.onchange = () => { const key = el.dataset.select, value = el.value; this._perform(() => this._call(key, "select_option", {option:value}, () => this._value(key) === value)); }; });
     root.querySelectorAll("[data-range]").forEach((el) => {
@@ -235,7 +275,8 @@ class TrimlightPatternCard extends HTMLElement {
     });
     root.querySelectorAll("[data-action]").forEach((el) => { el.onclick = () => {
       const key = el.dataset.action;
-      this._perform(() => this._call(key, "press"), key === "save" ? "Saved a new copy. Choose it from the pattern list to edit it." : key === "preview" ? "Preview sent to controller." : "New draft created.");
+      if (key === "new" || key === "save") this._showNameDialog(key);
+      else this._perform(() => this._call(key, "press"), "Preview sent to controller.");
     }; });
   }
 }
