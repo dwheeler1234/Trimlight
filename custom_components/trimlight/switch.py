@@ -11,13 +11,37 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from .controls import async_update_builtin, builtin_control_available
 from .data import get_data
 from .entity import TrimlightEntity
+from .editor import PatternEditorEntity
 
 
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
     data = get_data(hass, entry.entry_id)
-    async_add_entities([TrimlightReverseSwitch(hass, entry.entry_id, data.coordinator)])
+    async_add_entities([
+        TrimlightReverseSwitch(hass, entry.entry_id, data.coordinator),
+        PatternDisabledSwitch(hass, entry.entry_id, data.coordinator),
+    ])
+
+
+class PatternDisabledSwitch(PatternEditorEntity, SwitchEntity):
+    _attr_name = "Trimlight Pattern Entry Disabled"
+
+    def __init__(self, hass, entry_id, coordinator) -> None:
+        super().__init__(hass, entry_id, coordinator)
+        self._attr_unique_id = f"{entry_id}_pattern_entry_disabled"
+
+    @property
+    def is_on(self) -> bool:
+        return self.draft.selected_pixel["disable"]
+
+    async def async_turn_on(self, **kwargs: Any) -> None:
+        self.draft.selected_pixel["disable"] = True
+        self.notify_draft()
+
+    async def async_turn_off(self, **kwargs: Any) -> None:
+        self.draft.selected_pixel["disable"] = False
+        self.notify_draft()
 
 
 class TrimlightReverseSwitch(TrimlightEntity, SwitchEntity):
