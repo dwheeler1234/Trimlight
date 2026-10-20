@@ -139,6 +139,19 @@ class DiscoveryTests(unittest.TestCase):
         instance = actual_api.TrimlightApi(None, actual_api.TrimlightCredentials("u", "s", "d"), clock=clock)
         self.assertEqual(instance._current_date_payload(), {"year":26, "month":10, "day":20, "weekday":3, "hours":12, "minutes":15, "seconds":1})
 
+    async def test_scheduling_registration_uses_explicit_entry_and_admin_writes(self):
+        scheduling = importlib.import_module("trimlight_feature_test.scheduling")
+        _, runtime, _, _ = m.runtime()
+        records = {}
+        registry = SimpleNamespace(records=records, async_register=lambda domain, action, handler, **kwargs: records.update({action:(handler, kwargs, False)}))
+        hass = SimpleNamespace(services=registry, data={"trimlight":{"entry":runtime}})
+        services.register_action_set(hass, scheduling.SCHEDULE_FIELDS, scheduling.SchedulingController, {"get_schedules", "run_playlist"})
+        self.assertEqual(set(records), set(scheduling.SCHEDULE_FIELDS))
+        self.assertTrue(records["set_daily_schedule"][2])
+        self.assertFalse(records["get_schedules"][2])
+        result = await records["get_schedules"][0](SimpleNamespace(data={"config_entry_id":"entry"}, return_response=True))
+        self.assertEqual(result["daily"], [])
+
 
 for name, method in list(vars(DiscoveryTests).items()):
     if name.startswith("test_") and inspect.iscoroutinefunction(method):
