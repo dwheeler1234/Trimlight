@@ -1,0 +1,31 @@
+{
+  "config": {
+    "flow_title": "Trimlight",
+    "step": {
+      "user": {
+        "title": "Connect to Trimlight",
+        "description": "Enter your Trimlight API credentials.\n\nClient ID is the login you use to log in to the app.\nClient Secret is provided by Trimlight.\nDevice ID identifies your Trimlight controller (use the TrimlightEdgeControl scripts to discover it).",
+        "data": {
+          "client_id": "Client ID",
+          "client_secret": "Client Secret",
+          "device_id": "Device ID"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect to Trimlight."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Trimlight options",
+        "description": "Commit custom presets runs the saved preset by ID after selection. Enable debug logging to write structured events to trimlight_debug_ENTRY_ID.jsonl in your Home Assistant config directory.",
+        "data": {
+          "commit_custom_preset": "Commit custom presets",
+          "debug_logging": "Enable debug logging"
+        }
+      }
+    }
+  }
+}
