@@ -21,7 +21,7 @@ from .data import TrimlightData
 from .debug import async_log_event, get_debug_log_path
 from .storage import get_debug_cache_path, load_preset_cache, setup_preset_cache_listener
 
-PLATFORMS: list[str] = ["light", "select", "button", "sensor", "number"]
+PLATFORMS: list[str] = ["light", "select", "button", "sensor", "number", "switch"]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -89,3 +89,4 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def _async_entry_updated(hass: HomeAssistant, entry: ConfigEntry) -> None:
     await hass.config_entries.async_reload(entry.entry_id)
+
