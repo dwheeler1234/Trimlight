@@ -216,7 +216,7 @@ To install the matching card:
 
 1. Copy `www/trimlight-pattern-card.js` into your Home Assistant configuration
    folder at `www/trimlight-pattern-card.js`.
-2. Add `/local/trimlight-pattern-card.js?v=2` under **Settings > Dashboards >
+2. Add `/local/trimlight-pattern-card.js?v=3` under **Settings > Dashboards >
    Resources** as a **JavaScript module**. If the Resources menu is hidden, enable
    Advanced Mode in your user profile. Restart Home Assistant once if you just
    created the `www` folder, then reload the browser.
@@ -236,6 +236,14 @@ Click a position circle to select it and open a themed pixel-count dialog. Enter
 a whole number from 0 to 60 and press **Save**, or cancel/Escape to keep its count.
 The dialog preserves typed input during incoming state updates. Palette choices
 still apply to the selected position after closing the dialog.
+
+The palette has four rows of seven circles and its own expand/collapse arrow.
+The two leftmost circles in row two and all circles in the bottom two rows are
+16 custom-color slots. Tap a custom circle to apply its color; tap its pencil
+to choose a new RGB color and apply it to the selected pattern position. Custom
+colors persist in this browser's local storage, separately for each configured
+pattern-name entity. They are not shared between browsers/devices; if browser
+storage is disabled they remain available only in memory for this card session.
 
 For a standard-card alternative, use the [entity-based dashboard card](docs/custom-pattern-editor.yaml),
 which needs no JavaScript resource.
