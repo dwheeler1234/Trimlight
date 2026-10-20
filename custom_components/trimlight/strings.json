@@ -4,16 +4,27 @@
     "step": {
       "user": {
         "title": "Connect to Trimlight",
-        "description": "Enter your Trimlight API credentials.\n\nClient ID is the login you use to log in to the app.\nClient Secret is provided by Trimlight.\nDevice ID identifies your Trimlight controller (use the TrimlightEdgeControl scripts to discover it).",
+        "description": "Enter your Trimlight API credentials. Leave Device ID blank to choose from your account's controllers, or enter it manually.",
         "data": {
           "client_id": "Client ID",
           "client_secret": "Client Secret",
           "device_id": "Device ID"
         }
+      },
+      "device": {
+        "title": "Choose a Trimlight controller",
+        "data": {
+          "device_id": "Controller"
+        }
       }
     },
     "error": {
-      "cannot_connect": "Failed to connect to Trimlight."
+      "cannot_connect": "Failed to connect to Trimlight.",
+      "no_devices": "No controllers were found. Check the account or enter a Device ID manually."
+    },
+    "abort": {
+      "already_configured": "This controller is already configured.",
+      "device_not_found": "This controller is no longer in the account list."
     }
   },
   "options": {
@@ -24,6 +35,286 @@
         "data": {
           "commit_custom_preset": "Commit custom presets",
           "debug_logging": "Enable debug logging"
+        }
+      }
+    }
+  },
+  "services": {
+    "list_devices": {
+      "name": "List devices",
+      "description": "List controllers in this Trimlight account.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Trimlight entry",
+          "description": "The loaded integration instance for this controller/account."
+        }
+      }
+    },
+    "list_groups": {
+      "name": "List groups",
+      "description": "List native Trimlight groups in this account.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Trimlight entry",
+          "description": "The loaded integration instance for this controller/account."
+        }
+      }
+    },
+    "get_backup": {
+      "name": "Get backup",
+      "description": "Retrieve the current controller backup key and timestamp.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Trimlight entry",
+          "description": "The loaded integration instance for this controller/account."
+        }
+      }
+    },
+    "request_live_state": {
+      "name": "Request live state",
+      "description": "Ask the controller to report its cloud shadow, then request a refresh.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Trimlight entry",
+          "description": "The loaded integration instance for this controller/account."
+        }
+      }
+    },
+    "sync_clock": {
+      "name": "Sync clock",
+      "description": "Set the controller clock from the Home Assistant configured timezone.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Trimlight entry",
+          "description": "The loaded integration instance for this controller/account."
+        }
+      }
+    },
+    "rename_device": {
+      "name": "Rename device",
+      "description": "Rename the controller in Trimlight.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Trimlight entry",
+          "description": "The loaded integration instance for this controller/account."
+        },
+        "name": {
+          "name": "Name",
+          "description": "See the controller management documentation for name format."
+        }
+      }
+    },
+    "configure_controller": {
+      "name": "Configure controller",
+      "description": "Set RGB color order, IC type, or physical port pixel ranges.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Trimlight entry",
+          "description": "The loaded integration instance for this controller/account."
+        },
+        "settings": {
+          "name": "Settings",
+          "description": "See the controller management documentation for settings format."
+        }
+      }
+    },
+    "rename_preset": {
+      "name": "Rename preset",
+      "description": "Rename a saved preset without changing its pattern fields.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Trimlight entry",
+          "description": "The loaded integration instance for this controller/account."
+        },
+        "effect_id": {
+          "name": "Effect id",
+          "description": "See the controller management documentation for effect id format."
+        },
+        "name": {
+          "name": "Name",
+          "description": "See the controller management documentation for name format."
+        }
+      }
+    },
+    "duplicate_preset": {
+      "name": "Duplicate preset",
+      "description": "Save a copy of an existing preset with a new name.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Trimlight entry",
+          "description": "The loaded integration instance for this controller/account."
+        },
+        "effect_id": {
+          "name": "Effect id",
+          "description": "See the controller management documentation for effect id format."
+        },
+        "name": {
+          "name": "Name",
+          "description": "See the controller management documentation for name format."
+        }
+      }
+    },
+    "update_preset": {
+      "name": "Update preset",
+      "description": "Update supported fields of an existing saved preset.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Trimlight entry",
+          "description": "The loaded integration instance for this controller/account."
+        },
+        "effect_id": {
+          "name": "Effect id",
+          "description": "See the controller management documentation for effect id format."
+        },
+        "changes": {
+          "name": "Changes",
+          "description": "See the controller management documentation for changes format."
+        }
+      }
+    },
+    "delete_preset": {
+      "name": "Delete preset",
+      "description": "Delete a saved preset after checking schedule, playlist, and overlay references.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Trimlight entry",
+          "description": "The loaded integration instance for this controller/account."
+        },
+        "effect_id": {
+          "name": "Effect id",
+          "description": "See the controller management documentation for effect id format."
+        }
+      }
+    },
+    "set_overlays": {
+      "name": "Set overlays",
+      "description": "Replace overlay assignments; an empty list removes all overlays.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Trimlight entry",
+          "description": "The loaded integration instance for this controller/account."
+        },
+        "overlays": {
+          "name": "Overlays",
+          "description": "See the controller management documentation for overlays format."
+        }
+      }
+    },
+    "create_backup": {
+      "name": "Create backup",
+      "description": "Request a controller backup using a documented timezone abbreviation.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Trimlight entry",
+          "description": "The loaded integration instance for this controller/account."
+        },
+        "timezone": {
+          "name": "Timezone",
+          "description": "See the controller management documentation for timezone format."
+        }
+      }
+    },
+    "restore_backup": {
+      "name": "Restore backup",
+      "description": "Restore this controller from its current matching backup key.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Trimlight entry",
+          "description": "The loaded integration instance for this controller/account."
+        },
+        "backup_key": {
+          "name": "Backup key",
+          "description": "See the controller management documentation for backup key format."
+        }
+      }
+    },
+    "create_group": {
+      "name": "Create group",
+      "description": "Create a native Trimlight group, including its master in the device list.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Trimlight entry",
+          "description": "The loaded integration instance for this controller/account."
+        },
+        "name": {
+          "name": "Name",
+          "description": "See the controller management documentation for name format."
+        },
+        "master_device": {
+          "name": "Master device",
+          "description": "See the controller management documentation for master device format."
+        },
+        "devices": {
+          "name": "Devices",
+          "description": "See the controller management documentation for devices format."
+        }
+      }
+    },
+    "update_group": {
+      "name": "Update group",
+      "description": "Replace the group's master and member list.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Trimlight entry",
+          "description": "The loaded integration instance for this controller/account."
+        },
+        "group_id": {
+          "name": "Group id",
+          "description": "See the controller management documentation for group id format."
+        },
+        "master_device": {
+          "name": "Master device",
+          "description": "See the controller management documentation for master device format."
+        },
+        "devices": {
+          "name": "Devices",
+          "description": "See the controller management documentation for devices format."
+        }
+      }
+    },
+    "rename_group": {
+      "name": "Rename group",
+      "description": "Rename a native Trimlight group.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Trimlight entry",
+          "description": "The loaded integration instance for this controller/account."
+        },
+        "group_id": {
+          "name": "Group id",
+          "description": "See the controller management documentation for group id format."
+        },
+        "name": {
+          "name": "Name",
+          "description": "See the controller management documentation for name format."
+        }
+      }
+    },
+    "delete_group": {
+      "name": "Delete group",
+      "description": "Delete a native Trimlight group.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Trimlight entry",
+          "description": "The loaded integration instance for this controller/account."
+        },
+        "group_id": {
+          "name": "Group id",
+          "description": "See the controller management documentation for group id format."
+        }
+      }
+    },
+    "sync_group": {
+      "name": "Sync group",
+      "description": "Synchronize a native group from its online master controller.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Trimlight entry",
+          "description": "The loaded integration instance for this controller/account."
+        },
+        "group_id": {
+          "name": "Group id",
+          "description": "See the controller management documentation for group id format."
         }
       }
     }
