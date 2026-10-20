@@ -9,6 +9,9 @@ This is a custom integration, not an official Home Assistant integration.
 
 ## Features
 
+- RGB color picker on `light.trimlight` (temporary solid-color preview)
+- `number.trimlight_effect_length` for built-in pattern length (1-90)
+- `switch.trimlight_reverse_animation` for built-in animation direction
 - UI-based setup through Home Assistant config flow
 - `light.trimlight` for power and brightness
 - `select.trimlight_built_in_preset` for built-in animations
@@ -198,6 +201,56 @@ Preset cache data is stored in Home Assistant storage and also written as a read
 If built-in presets are not returned by the controller, the integration falls back to the static built-in preset list bundled with the integration.
 
 ## Automation Examples
+
+### Choose A Solid Color
+
+```yaml
+action: light.turn_on
+target:
+  entity_id: light.trimlight
+data:
+  rgb_color: [255, 80, 0]
+  brightness_pct: 70
+```
+
+Choosing a color replaces the running effect with a temporary static custom preview.
+It does not overwrite a saved preset, even with `Commit custom presets` enabled.
+Brightness/speed changes to an unsaved custom preview keep it unsaved. Select a
+built-in or saved custom preset to return to an animation. RGB state is reported
+only when the active static custom pattern has one enabled color throughout;
+multicolor patterns and built-in effects have no single reported RGB color.
+
+### Adjust A Built-In Animation
+
+After selecting a built-in preset and allowing its verification to finish:
+
+```yaml
+action: number.set_value
+target:
+  entity_id: number.trimlight_effect_length
+data:
+  value: 40
+```
+
+```yaml
+action: switch.turn_on
+target:
+  entity_id: switch.trimlight_reverse_animation
+```
+
+These two controls are available only for a settled built-in effect running in
+manual mode. They preserve its mode, speed, brightness and other parameter.
+Changes use preview and do not overwrite a saved effect. They are unavailable
+while off, in timer mode, during a pending preset transition, or while a custom
+effect runs. Actual visual direction/length behavior depends on the animation.
+Entity IDs may have suffixes if several controllers are configured.
+
+### Offline Feature Tests
+
+Run `python tools/test_feature_controls.py` with Python 3.11 or newer. The tests
+exercise real feature logic with mocked Home Assistant interfaces and API
+responses; they do not contact a controller. Full Home Assistant loading and
+physical-controller behavior still require validation before deployment.
 
 ### Turn On And Select A Custom Preset
 
@@ -402,3 +455,4 @@ The repository includes Trimlight EDGE API reference material in [`docs`](docs).
 ## License
 
 MIT License. See [`LICENSE`](LICENSE).
+
