@@ -17,6 +17,8 @@ from .data import get_data
 from .debug import async_log_event
 from .entity import TrimlightEntity
 from .editor import PatternEditorEntity
+from .controls import require_success
+from .validation import SWITCH_MODES
 from .effects import (
     find_builtin_preset,
     find_builtin_preset_by_name,
@@ -164,8 +166,39 @@ async def async_setup_entry(
             TrimlightCustomModeSelect(hass, entry.entry_id, coordinator),
             PatternModeSelect(hass, entry.entry_id, coordinator),
             PatternSourceSelect(hass, entry.entry_id, coordinator),
+            TrimlightOperatingModeSelect(hass, entry.entry_id, coordinator),
         ]
     )
+
+
+class TrimlightOperatingModeSelect(TrimlightEntity, SelectEntity):
+    _attr_name = "Trimlight Operating Mode"
+    _attr_options = list(SWITCH_MODES)
+
+    def __init__(self, hass, entry_id, coordinator):
+        super().__init__(hass, entry_id, coordinator)
+        self._attr_unique_id = f"{entry_id}_operating_mode"
+
+    @property
+    def current_option(self):
+        state = (self.coordinator.data or {}).get("switch_state")
+        return next((name for name, value in SWITCH_MODES.items() if value == state), None)
+
+    async def async_select_option(self, option):
+        from homeassistant.exceptions import HomeAssistantError
+
+        if option not in SWITCH_MODES:
+            raise HomeAssistantError("Choose Off, Manual or Timer")
+        value = SWITCH_MODES[option]
+        require_success(await self._data.api.set_switch_state(value))
+        self._cancel_pending_followups()
+        self._clear_pending_transition()
+        self._data.forced_on_until = None
+        self._data.forced_off_until = None
+        updated = dict(self.coordinator.data or {})
+        updated["switch_state"] = value
+        self.coordinator.async_set_updated_data(updated)
+        self._schedule_verification_refresh()
 
 
 class PatternSourceSelect(PatternEditorEntity, SelectEntity):
