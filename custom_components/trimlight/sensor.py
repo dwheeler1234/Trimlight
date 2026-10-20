@@ -26,10 +26,38 @@ async def async_setup_entry(
     coordinator = data.coordinator
     async_add_entities([
         TrimlightCurrentPresetSensor(hass, entry.entry_id, coordinator),
+        *[TrimlightScheduleSensor(hass, entry.entry_id, coordinator, field, title)
+          for field, title in (("daily", "Daily Schedules"), ("calendar", "Calendar Schedules"),
+                               ("combinedEffect", "Playlist"))],
         *[TrimlightDetailSensor(hass, entry.entry_id, coordinator, field, title)
           for field, title in (("fwVersionName", "Firmware"), ("state", "Controller State"),
                                ("currentDatetime", "Controller Clock"))],
     ])
+
+
+class TrimlightScheduleSensor(TrimlightEntity, SensorEntity):
+    def __init__(self, hass, entry_id, coordinator, field, title):
+        super().__init__(hass, entry_id, coordinator)
+        self.field = field
+        self._attr_name = f"Trimlight {title}"
+        self._attr_unique_id = f"{entry_id}_schedule_{field}"
+
+    @property
+    def native_value(self):
+        value = ((self.coordinator.data or {}).get("payload") or {}).get(self.field)
+        if self.field == "combinedEffect":
+            return len((value or {}).get("effectIds") or [])
+        return len(value or [])
+
+    @property
+    def extra_state_attributes(self):
+        from copy import deepcopy
+
+        payload = (self.coordinator.data or {}).get("payload") or {}
+        if self.field == "combinedEffect":
+            value = payload.get(self.field) or {}
+            return {"effect_ids": list(value.get("effectIds") or []), "interval_minutes": value.get("interval")}
+        return {"schedules": deepcopy(payload.get(self.field) or [])}
 
 
 class TrimlightDetailSensor(TrimlightEntity, SensorEntity):

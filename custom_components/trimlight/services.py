@@ -12,7 +12,11 @@ from .management import ACTION_FIELDS, READ_ACTIONS, ManagementController
 
 
 def register_services(hass) -> None:
-    for action, fields in ACTION_FIELDS.items():
+    register_action_set(hass, ACTION_FIELDS, ManagementController, READ_ACTIONS | {"request_live_state", "sync_group"})
+
+
+def register_action_set(hass, action_fields, controller_class, normal_actions) -> None:
+    for action, fields in action_fields.items():
         schema = vol.Schema({vol.Required("config_entry_id"): str,
                              **{vol.Required(key): kind for key, kind in fields.items()}})
 
@@ -22,10 +26,10 @@ def register_services(hass) -> None:
             if runtime is None:
                 raise HomeAssistantError("Select a loaded Trimlight configuration entry")
             params = {key: value for key, value in call.data.items() if key != "config_entry_id"}
-            result = await ManagementController(runtime).execute(action, params)
+            result = await controller_class(runtime).execute(action, params)
             return result if call.return_response else None
 
-        if action in READ_ACTIONS or action in {"request_live_state", "sync_group"}:
+        if action in normal_actions:
             hass.services.async_register(DOMAIN, action, handle, schema=schema,
                                          supports_response=SupportsResponse.OPTIONAL)
         else:

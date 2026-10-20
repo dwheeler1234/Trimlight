@@ -317,6 +317,144 @@
           "description": "See the controller management documentation for group id format."
         }
       }
+    },
+    "get_schedules": {
+      "name": "Get schedules",
+      "description": "Read the controller's daily, calendar and combined-effect configuration.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Trimlight entry",
+          "description": "The loaded configuration entry for this controller."
+        }
+      }
+    },
+    "set_daily_schedule": {
+      "name": "Set daily schedule",
+      "description": "Configure daily slot 0 or 1 without changing the operating mode.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Trimlight entry",
+          "description": "The loaded configuration entry for this controller."
+        },
+        "schedule_id": {
+          "name": "Schedule id",
+          "description": "See the scheduling documentation for this field's format."
+        },
+        "enabled": {
+          "name": "Enabled",
+          "description": "See the scheduling documentation for this field's format."
+        },
+        "effect_id": {
+          "name": "Effect id",
+          "description": "See the scheduling documentation for this field's format."
+        },
+        "repetition": {
+          "name": "Repetition",
+          "description": "See the scheduling documentation for this field's format."
+        },
+        "start_time": {
+          "name": "Start time",
+          "description": "Raw vendor schedule time object: hours 1-24, minutes 1-60. Clock and schedule conventions differ; see documentation."
+        },
+        "end_time": {
+          "name": "End time",
+          "description": "Raw vendor schedule time object: hours 1-24, minutes 1-60. Clock and schedule conventions differ; see documentation."
+        }
+      }
+    },
+    "enable_daily_schedule": {
+      "name": "Enable daily schedule",
+      "description": "Enable or disable a daily slot while preserving its controller-reported settings.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Trimlight entry",
+          "description": "The loaded configuration entry for this controller."
+        },
+        "schedule_id": {
+          "name": "Schedule id",
+          "description": "See the scheduling documentation for this field's format."
+        },
+        "enabled": {
+          "name": "Enabled",
+          "description": "See the scheduling documentation for this field's format."
+        }
+      }
+    },
+    "save_calendar_schedule": {
+      "name": "Save calendar schedule",
+      "description": "Create or replace annual calendar slot 0-59.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Trimlight entry",
+          "description": "The loaded configuration entry for this controller."
+        },
+        "schedule_id": {
+          "name": "Schedule id",
+          "description": "See the scheduling documentation for this field's format."
+        },
+        "effect_id": {
+          "name": "Effect id",
+          "description": "See the scheduling documentation for this field's format."
+        },
+        "start_date": {
+          "name": "Start date",
+          "description": "Annual month/day object. Ranges may cross December to January."
+        },
+        "end_date": {
+          "name": "End date",
+          "description": "Annual month/day object. Ranges may cross December to January."
+        },
+        "start_time": {
+          "name": "Start time",
+          "description": "Raw vendor schedule time object: hours 1-24, minutes 1-60. Clock and schedule conventions differ; see documentation."
+        },
+        "end_time": {
+          "name": "End time",
+          "description": "Raw vendor schedule time object: hours 1-24, minutes 1-60. Clock and schedule conventions differ; see documentation."
+        }
+      }
+    },
+    "delete_calendar_schedule": {
+      "name": "Delete calendar schedule",
+      "description": "Delete an existing annual calendar slot.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Trimlight entry",
+          "description": "The loaded configuration entry for this controller."
+        },
+        "schedule_id": {
+          "name": "Schedule id",
+          "description": "See the scheduling documentation for this field's format."
+        }
+      }
+    },
+    "set_playlist": {
+      "name": "Set playlist",
+      "description": "Store a combined effect with 1-5 saved preset IDs and a minute interval.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Trimlight entry",
+          "description": "The loaded configuration entry for this controller."
+        },
+        "effect_ids": {
+          "name": "Effect ids",
+          "description": "See the scheduling documentation for this field's format."
+        },
+        "interval": {
+          "name": "Interval",
+          "description": "See the scheduling documentation for this field's format."
+        }
+      }
+    },
+    "run_playlist": {
+      "name": "Run playlist",
+      "description": "Enter manual mode and run the combined effect with fixed effect ID 200.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Trimlight entry",
+          "description": "The loaded configuration entry for this controller."
+        }
+      }
     }
   }
 }
