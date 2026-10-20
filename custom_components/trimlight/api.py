@@ -7,6 +7,9 @@ import time
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
+from typing import Callable
+
+from .management_api import ManagementApi
 
 import aiohttp
 import async_timeout
@@ -19,18 +22,20 @@ class TrimlightCredentials:
     device_id: str
 
 
-class TrimlightApi:
+class TrimlightApi(ManagementApi):
     def __init__(
         self,
         session: aiohttp.ClientSession,
         creds: TrimlightCredentials,
         base_url: str = "https://trimlight.ledhue.com/trimlight",
         timeout_s: float = 10.0,
+        clock: Callable[[], datetime] | None = None,
     ) -> None:
         self._session = session
         self._creds = creds
         self._base_url = base_url.rstrip("/")
         self._timeout_s = timeout_s
+        self._clock = clock or (lambda: datetime.now().astimezone())
 
     def _timestamp_ms(self) -> int:
         return int(time.time() * 1000)
@@ -230,9 +235,8 @@ class TrimlightApi:
         payload = {"deviceId": self._creds.device_id, "payload": {"id": int(effect_id)}}
         return await self._request("POST", "/v1/oauth/resources/device/effect/view", payload=payload)
 
-    @staticmethod
-    def _current_date_payload() -> dict[str, int]:
-        now = datetime.now()
+    def _current_date_payload(self) -> dict[str, int]:
+        now = self._clock()
         weekday = ((now.weekday() + 1) % 7) + 1  # Sunday=1 ... Saturday=7
         return {
             "year": now.year - 2000,
@@ -243,3 +247,4 @@ class TrimlightApi:
             "minutes": now.minute,
             "seconds": now.second,
         }
+

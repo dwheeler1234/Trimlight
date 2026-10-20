@@ -4,6 +4,8 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_CLIENT_ID, CONF_CLIENT_SECRET
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers import config_validation as cv
+from homeassistant.util import dt as dt_util
 
 from .api import TrimlightApi, TrimlightCredentials
 from .const import (
@@ -20,8 +22,15 @@ from .coordinator import TrimlightCoordinator
 from .data import TrimlightData
 from .debug import async_log_event, get_debug_log_path
 from .storage import get_debug_cache_path, load_preset_cache, setup_preset_cache_listener
+from .services import register_services
 
-PLATFORMS: list[str] = ["light", "select", "button", "sensor", "number", "switch", "text"]
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
+PLATFORMS: list[str] = ["light", "select", "button", "sensor", "number", "switch", "text", "binary_sensor"]
+
+
+async def async_setup(hass: HomeAssistant, config: dict) -> bool:
+    register_services(hass)
+    return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -31,7 +40,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         client_secret=data[CONF_CLIENT_SECRET],
         device_id=data[CONF_DEVICE_ID],
     )
-    api = TrimlightApi(async_get_clientsession(hass), creds)
+    api = TrimlightApi(async_get_clientsession(hass), creds, clock=dt_util.now)
     coordinator = TrimlightCoordinator(hass, api)
 
     store, builtins, custom_cache = await load_preset_cache(hass, entry.entry_id)

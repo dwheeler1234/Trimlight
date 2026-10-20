@@ -35,14 +35,18 @@ class TrimlightEntity(CoordinatorEntity[TrimlightCoordinator]):
 
         return {
             "identifiers": {(DOMAIN, device_id)},
-            "name": "Trimlight",
+            "name": payload.get("name") or "Trimlight",
             "manufacturer": "Trimlight",
             "model": "EDGE",
+            "sw_version": payload.get("fwVersionName"),
         }
 
     def _is_effectively_on(self) -> bool | None:
         data = self.coordinator.data or {}
         switch_state = data.get("switch_state")
+        # Timer mode reports the last effect even outside its active schedule.
+        if switch_state == 2:
+            return None
         runtime = self._data
         now = time.monotonic()
 
@@ -66,6 +70,17 @@ class TrimlightEntity(CoordinatorEntity[TrimlightCoordinator]):
         if switch_state is None:
             return None
         return int(switch_state) != 0
+
+    @property
+    def available(self) -> bool:
+        return self.coordinator.last_update_success and ((self.coordinator.data or {}).get("payload") or {}).get("connectivity") != 0
+
+    def _related_select_state(self, suffix: str):
+        from homeassistant.helpers import entity_registry as er
+
+        registry = er.async_get(self._hass)
+        entity_id = registry.async_get_entity_id("select", DOMAIN, f"{self._entry_id}_{suffix}")
+        return self._hass.states.get(entity_id) if entity_id else None
 
     def _active_pending_transition(self) -> PendingTransition | None:
         runtime = self._data
@@ -272,3 +287,4 @@ class TrimlightEntity(CoordinatorEntity[TrimlightCoordinator]):
         data.verify_refresh_handle = self._hass.loop.call_later(
             delay_s, _refresh
         )
+

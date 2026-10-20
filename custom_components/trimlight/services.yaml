@@ -1,0 +1,246 @@
+list_devices:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: trimlight
+list_groups:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: trimlight
+get_backup:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: trimlight
+request_live_state:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: trimlight
+sync_clock:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: trimlight
+rename_device:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: trimlight
+    name:
+      required: true
+      selector:
+        text: {}
+configure_controller:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: trimlight
+    settings:
+      required: true
+      selector:
+        object: {}
+rename_preset:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: trimlight
+    effect_id:
+      required: true
+      selector:
+        number:
+          min: 0
+          max: 59
+          mode: box
+    name:
+      required: true
+      selector:
+        text: {}
+duplicate_preset:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: trimlight
+    effect_id:
+      required: true
+      selector:
+        number:
+          min: 0
+          max: 59
+          mode: box
+    name:
+      required: true
+      selector:
+        text: {}
+update_preset:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: trimlight
+    effect_id:
+      required: true
+      selector:
+        number:
+          min: 0
+          max: 59
+          mode: box
+    changes:
+      required: true
+      selector:
+        object: {}
+delete_preset:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: trimlight
+    effect_id:
+      required: true
+      selector:
+        number:
+          min: 0
+          max: 59
+          mode: box
+set_overlays:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: trimlight
+    overlays:
+      required: true
+      selector:
+        object: {}
+create_backup:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: trimlight
+    timezone:
+      required: true
+      selector:
+        select:
+          options:
+            - HST
+            - AKST
+            - PST
+            - MST
+            - CST
+            - EST
+            - HDT
+            - AKDT
+            - PDT
+            - MDT
+            - CDT
+            - EDT
+restore_backup:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: trimlight
+    backup_key:
+      required: true
+      selector:
+        text: {}
+create_group:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: trimlight
+    name:
+      required: true
+      selector:
+        text: {}
+    master_device:
+      required: true
+      selector:
+        text: {}
+    devices:
+      required: true
+      selector:
+        object: {}
+update_group:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: trimlight
+    group_id:
+      required: true
+      selector:
+        text: {}
+    master_device:
+      required: true
+      selector:
+        text: {}
+    devices:
+      required: true
+      selector:
+        object: {}
+rename_group:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: trimlight
+    group_id:
+      required: true
+      selector:
+        text: {}
+    name:
+      required: true
+      selector:
+        text: {}
+delete_group:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: trimlight
+    group_id:
+      required: true
+      selector:
+        text: {}
+sync_group:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: trimlight
+    group_id:
+      required: true
+      selector:
+        text: {}

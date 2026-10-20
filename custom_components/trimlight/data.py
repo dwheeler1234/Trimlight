@@ -61,6 +61,8 @@ class TrimlightData:
     debug_log_lock: asyncio.Lock = field(default_factory=asyncio.Lock)
     pattern_draft: PatternDraft = field(default_factory=PatternDraft)
     pattern_lock: asyncio.Lock = field(default_factory=asyncio.Lock)
+    management_lock: asyncio.Lock = field(default_factory=asyncio.Lock)
+    backup_metadata: dict = field(default_factory=dict)
 
 
 def get_data(hass: HomeAssistant, entry_id: str) -> TrimlightData:

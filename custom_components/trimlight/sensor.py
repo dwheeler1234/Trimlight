@@ -24,7 +24,46 @@ async def async_setup_entry(
 ) -> None:
     data = get_data(hass, entry.entry_id)
     coordinator = data.coordinator
-    async_add_entities([TrimlightCurrentPresetSensor(hass, entry.entry_id, coordinator)])
+    async_add_entities([
+        TrimlightCurrentPresetSensor(hass, entry.entry_id, coordinator),
+        *[TrimlightDetailSensor(hass, entry.entry_id, coordinator, field, title)
+          for field, title in (("fwVersionName", "Firmware"), ("state", "Controller State"),
+                               ("currentDatetime", "Controller Clock"))],
+    ])
+
+
+class TrimlightDetailSensor(TrimlightEntity, SensorEntity):
+    def __init__(self, hass, entry_id, coordinator, field, title):
+        super().__init__(hass, entry_id, coordinator)
+        self.field = field
+        self._attr_name = f"Trimlight {title}"
+        self._attr_unique_id = f"{entry_id}_detail_{field}"
+
+    @property
+    def available(self):
+        return self.coordinator.last_update_success
+
+    @property
+    def native_value(self):
+        value = ((self.coordinator.data or {}).get("payload") or {}).get(self.field)
+        if self.field == "state":
+            return {0: "Normal", 1: "Upgrading"}.get(value)
+        if self.field == "currentDatetime":
+            if not isinstance(value, dict):
+                return value
+            try:
+                year = int(value["year"])
+                if year < 100:
+                    year += 2000
+                return f"{year:04d}-{int(value['month']):02d}-{int(value['day']):02d} {int(value['hours']):02d}:{int(value['minutes']):02d}:{int(value['seconds']):02d}"
+            except (KeyError, TypeError, ValueError):
+                return None
+        return value
+
+    @property
+    def extra_state_attributes(self):
+        payload = (self.coordinator.data or {}).get("payload") or {}
+        return {key: payload.get(key) for key in ("colorOrder", "ic", "ports", "switchState", "overlayEffects")}
 
 
 class TrimlightCurrentPresetSensor(TrimlightEntity, SensorEntity):
@@ -45,6 +84,8 @@ class TrimlightCurrentPresetSensor(TrimlightEntity, SensorEntity):
     def native_value(self) -> str:
         data = self.coordinator.data or {}
         is_on = self._is_effectively_on()
+        if is_on is None:
+            return "Timer" if data.get("switch_state") == 2 else "Unknown"
         if is_on is not True:
             return "Off"
 
@@ -65,8 +106,8 @@ class TrimlightCurrentPresetSensor(TrimlightEntity, SensorEntity):
                 return False
             return value not in {"unknown", "unavailable", "none", ""}
 
-        custom_state = self._hass.states.get("select.trimlight_custom_preset")
-        builtin_state = self._hass.states.get("select.trimlight_built_in_preset")
+        custom_state = self._related_select_state("custom_select")
+        builtin_state = self._related_select_state("builtin_select")
         raw_switch_state = data.get("switch_state")
         forced_on_override = (
             raw_switch_state is not None and int(raw_switch_state) == 0 and is_on is True
@@ -183,7 +224,7 @@ class TrimlightCurrentPresetSensor(TrimlightEntity, SensorEntity):
         current_category = data.get("current_effect_category")
         runtime = self._data
         presets = (data.get("custom_effects") or runtime.custom_cache)
-        custom_state = self._hass.states.get("select.trimlight_custom_preset")
+        custom_state = self._related_select_state("custom_select")
         builtins = runtime.builtins
         pending = self._active_pending_transition()
 
