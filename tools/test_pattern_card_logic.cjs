@@ -14,7 +14,9 @@ class Element {
   attachShadow() { this.shadowRoot = new ShadowRoot(); }
 }
 const registry = new Map();
+const paletteStorage = new Map();
 const context = vm.createContext({HTMLElement:Element, window:{}, setTimeout, clearTimeout,
+  localStorage:{getItem:(key) => paletteStorage.get(key) || null, setItem:(key, value) => paletteStorage.set(key, value)},
   customElements:{get:(name) => registry.get(name), define:(name, cls) => registry.set(name, cls)}});
 const source = fs.readFileSync(path.join(__dirname, "../www/trimlight-pattern-card.js"), "utf8");
 vm.runInContext(source, context);
@@ -45,6 +47,16 @@ async function main() {
   assert.match(card.shadowRoot.innerHTML, /grid-template-columns:repeat\(6/);
   assert.match(card.shadowRoot.innerHTML, /background:var\(--ha-card-background,var\(--card-background-color\)\)/);
   assert.match(card.shadowRoot.innerHTML, /background:var\(--secondary-background-color\)/);
+  assert.equal((card.shadowRoot.innerHTML.match(/data-custom-slot="/g) || []).length, 16);
+  assert.equal((card.shadowRoot.innerHTML.match(/data-color="/g) || []).length, 28);
+  card._paletteExpanded = false; card._render();
+  assert.equal((card.shadowRoot.innerHTML.match(/data-custom-slot="/g) || []).length, 2);
+  card._setCustomColor(15, "#123ABC");
+  const restoredPalette = new Card();
+  restoredPalette.setConfig({});
+  assert.equal(restoredPalette._customColors[15], "#123abc");
+  assert.throws(() => card._setCustomColor(16, "#112233"), /Invalid/);
+  card._paletteExpanded = true; card._render();
   assert.equal(card.shadowRoot.innerHTML.includes("data-count"), false);
   await card._openEntry(7);
   assert.equal(card._countDialog.open, true);
