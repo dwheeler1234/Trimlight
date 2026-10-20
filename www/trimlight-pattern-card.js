@@ -12,7 +12,7 @@ const PALETTE = [
   ["PU", "#8000ff"], ["O", "#ff6000"], ["W", "#ffffff"], ["WW", "#ffe1a3"],
   ["PI", "#ff0080"], ["C", "#00ffff"], ["BK", "#000000"], ["X", null],
 ];
-const EXTRA_COLORS = ["#756400", "#24dd28", "#007c8c", "#e4be39", "#210074", "#e40040", "#f7db35"];
+const CUSTOM_COLORS = ["#756400", "#24dd28", "#007c8c", "#e4be39", "#210074", "#000000", "#e40040", "#f7db35", "#ff8800", "#0088ff", "#ff66cc", "#88ffbb", "#ffcc88", "#7744bb", "#88ddff", "#ffffff"];
 const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"}[c]));
 const hex = (value) => `#${Math.max(0, Math.min(0xffffff, Number(value) || 0)).toString(16).padStart(6, "0")}`;
 const ink = (color) => {
@@ -25,6 +25,8 @@ class TrimlightPatternCard extends HTMLElement {
     super();
     this.attachShadow({mode: "open"});
     this._expanded = false;
+    this._paletteExpanded = true;
+    this._customColors = [...CUSTOM_COLORS];
     this._busy = false;
     this._waiters = new Set();
     this._error = "";
@@ -37,6 +39,12 @@ class TrimlightPatternCard extends HTMLElement {
       if (typeof id !== "string" || !/^[a-z_]+\.[a-z0-9_]+$/.test(id)) throw new Error("Use valid Home Assistant entity IDs in entities");
     }
     this._config = {...config, entities};
+    this._paletteStorageKey = `trimlight-palette:${entities.name}`;
+    this._customColors = [...CUSTOM_COLORS];
+    try {
+      const stored = JSON.parse(localStorage.getItem(this._paletteStorageKey));
+      if (Array.isArray(stored) && stored.length === 16 && stored.every((c) => /^#[0-9a-f]{6}$/i.test(c))) this._customColors = stored;
+    } catch (_) { /* Storage may be disabled; the palette still works in memory. */ }
     this._render();
   }
 
@@ -90,6 +98,12 @@ class TrimlightPatternCard extends HTMLElement {
     if (!this._pixel().count) await this._setNumber("count", 1);
   }
 
+  _setCustomColor(slot, color) {
+    if (!Number.isInteger(slot) || slot < 0 || slot >= 16 || !/^#[0-9a-f]{6}$/i.test(color)) throw new Error("Invalid custom color slot");
+    this._customColors[slot] = color.toLowerCase();
+    try { localStorage.setItem(this._paletteStorageKey, JSON.stringify(this._customColors)); } catch (_) { /* Keep in memory. */ }
+  }
+
   async _openEntry(index) {
     await this._perform(() => this._setNumber("entry", index));
     if (!this._error && Number(this._value("entry")) === Number(index)) this._showCountDialog(Number(index));
@@ -141,8 +155,13 @@ class TrimlightPatternCard extends HTMLElement {
     const locked = this._busy || missing.length > 0;
     const disabled = locked ? "disabled" : "";
     const pixels = Array.from({length:30}, (_, i) => (attrs.pixels || []).find((p) => p.index === i) || {index:i, color:0, count:0, disable:false});
-    const swatches = PALETTE.map(([label, color]) => `<button type="button" class="swatch ${color ? "" : "cross"}" data-color="${color || "disabled"}" style="--bulb:${color || "#000000"};--ink:${color ? ink(color) : "#ff4040"}" title="${label === "X" ? "Disable selected entry" : label}" aria-label="${label === "X" ? "Disable selected entry" : `Set entry color ${label}`}" ${disabled}>${label}</button>`).join("");
-    const extras = EXTRA_COLORS.map((color) => `<button type="button" class="swatch" data-color="${color}" style="--bulb:${color};--ink:${ink(color)}" aria-label="Set entry color ${color}" ${disabled}></button>`).join("");
+    const fixedSwatch = ([label, color]) => `<button type="button" class="swatch ${color ? "" : "cross"}" data-color="${color || "disabled"}" style="--bulb:${color || "#000000"};--ink:${color ? ink(color) : "#ff4040"}" title="${label === "X" ? "Disable selected entry" : label}" aria-label="${label === "X" ? "Disable selected entry" : `Set entry color ${label}`}" ${disabled}>${label}</button>`;
+    const customSwatch = (slot) => {
+      const color = this._customColors[slot];
+      return `<div class="custom-cell"><button type="button" class="swatch" data-color="${color}" style="--bulb:${color};--ink:${ink(color)}" aria-label="Apply custom color ${slot + 1}" title="Custom color ${slot + 1}" ${disabled}></button><label class="custom-edit" title="Edit custom color ${slot + 1}">✎<input type="color" data-custom-slot="${slot}" aria-label="Edit custom color ${slot + 1}" value="${color}" ${disabled}></label></div>`;
+    };
+    const swatches = PALETTE.slice(0, 7).map(fixedSwatch).join("") + customSwatch(0) + customSwatch(1) + PALETTE.slice(7).map(fixedSwatch).join("");
+    const extras = this._paletteExpanded ? Array.from({length:14}, (_, i) => customSwatch(i + 2)).join("") : "";
     const optionList = (key) => (this._state(key)?.attributes.options || []).map((value) => `<option value="${esc(value)}" ${value === this._value(key) ? "selected" : ""}>${esc(value)}</option>`).join("");
     const range = (key, icon, label) => {
       const value = Math.max(0, Math.min(255, Number(this._value(key)) || 0));
@@ -159,6 +178,7 @@ class TrimlightPatternCard extends HTMLElement {
       .cross{font-size:24px}.swatch{box-shadow:inset 0 0 0 1px rgb(128 128 128 / .3)}button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--primary-color);outline-offset:3px}
       .picker{position:relative;display:grid;place-items:center;aspect-ratio:1;width:100%;max-width:44px;border-radius:50%;background:var(--primary-background-color);border:1px solid var(--divider-color);font-size:22px;color:var(--primary-color);overflow:hidden}
       .picker input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}.palette-note{font-size:11px;text-align:center;color:var(--secondary-text-color);grid-column:1/-1;margin:0}
+      .custom-cell{position:relative;width:100%;max-width:44px;aspect-ratio:1}.custom-cell .swatch{height:100%;max-width:none}.custom-edit{position:absolute;right:-3px;bottom:-3px;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:13px;background:var(--card-background-color);color:var(--primary-color);border:1px solid var(--divider-color);overflow:hidden}.custom-edit input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}.palette-toggle{grid-column:1/-1;margin:0!important}
       select,input[type=text],input[type=number]{background:var(--card-background-color);color:var(--primary-text-color);border:1px solid var(--divider-color);border-radius:8px;padding:10px;width:100%;min-width:0}
       .source{border:0;border-bottom:1px solid var(--divider-color);border-radius:0;margin-bottom:12px;background:transparent;padding:4px 0 12px;font-size:16px}
       .grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px 10px;justify-items:center}.entry{font-size:14px;max-width:46px}.entry.selected{outline:3px solid var(--primary-color);outline-offset:3px}.entry.off::after{content:"";position:absolute;inset:5px;border-top:2px solid var(--primary-color);transform:translateY(50%) rotate(-45deg)}
@@ -173,7 +193,7 @@ class TrimlightPatternCard extends HTMLElement {
     </style><ha-card><div class="body">
       <div><div class="title">${esc(this._config.title || "Trimlight")} <ha-icon icon="mdi:palette-outline"></ha-icon></div><div class="subtitle">Custom pattern editor</div></div>
       ${missing.length ? `<p class="message error">Missing editor entities: ${esc(missing.map((key) => this._config.entities[key]).join(", "))}</p>` : ""}
-      <div class="panel palette">${swatches}<label class="picker" title="Choose any RGB color">＋<input type="color" aria-label="Choose any RGB color" value="${hex(pixel.color)}" ${disabled}></label><button class="swatch" data-color="${hex(pixel.color)}" style="--bulb:${hex(pixel.color)};--ink:${ink(hex(pixel.color))}" title="Selected entry color" aria-label="Apply selected entry color" ${disabled}>●</button>${extras}<p class="palette-note">Choose a color for entry ${index + 1}</p></div>
+      <div class="panel palette">${swatches}${extras}<button class="expand palette-toggle" aria-label="${this._paletteExpanded ? "Collapse color palette" : "Expand custom colors"}" aria-expanded="${this._paletteExpanded}">${this._paletteExpanded ? "⌃" : "⌄"}</button><p class="palette-note">Choose a color for entry ${index + 1} · ✎ edits custom colors</p></div>
       <div class="panel"><select class="source" data-select="source" aria-label="Load saved pattern into draft" ${disabled}>${optionList("source")}</select>
         <div class="grid">${pixels.slice(0, this._expanded ? 30 : 6).map((p) => {
           const color = p.count ? hex(p.color) : "#000000";
@@ -194,10 +214,14 @@ class TrimlightPatternCard extends HTMLElement {
 
   _bind() {
     const root = this.shadowRoot;
-    root.querySelector(".expand").onclick = () => { this._expanded = !this._expanded; this._render(); };
+    root.querySelector(".expand:not(.palette-toggle)").onclick = () => { this._expanded = !this._expanded; this._render(); };
+    root.querySelector(".palette-toggle").onclick = () => { this._paletteExpanded = !this._paletteExpanded; this._render(); };
     root.querySelectorAll("[data-entry]").forEach((el) => { el.onclick = () => this._openEntry(el.dataset.entry); });
     root.querySelectorAll("[data-color]").forEach((el) => { el.onclick = () => this._perform(() => el.dataset.color === "disabled" ? this._call("disabled", "turn_on", {}, () => this._pixel().disable) : this._applyColor(el.dataset.color)); });
-    root.querySelector("input[type=color]").onchange = (event) => { const value = event.target.value; this._perform(() => this._applyColor(value)); };
+    root.querySelectorAll("[data-custom-slot]").forEach((el) => { el.onchange = () => {
+      const slot = Number(el.dataset.customSlot), color = el.value;
+      this._perform(async () => { this._setCustomColor(slot, color); await this._applyColor(color); });
+    }; });
     root.querySelector("[data-name]").onchange = (event) => {
       const value = event.target.value.trim();
       this._perform(() => this._call("name", "set_value", {value}, () => this._value("name") === value));
