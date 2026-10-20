@@ -9,6 +9,7 @@ from homeassistant.const import CONF_CLIENT_ID, CONF_CLIENT_SECRET
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .api import TrimlightApi, TrimlightCredentials
+from .controls import require_success
 from .const import (
     CONF_COMMIT_CUSTOM_PRESET,
     CONF_DEBUG_LOGGING,
@@ -38,7 +39,7 @@ class TrimlightConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             api = TrimlightApi(async_get_clientsession(self.hass), creds)
 
             try:
-                await api.get_device_detail()
+                require_success(await api.get_device_detail())
             except Exception:  # noqa: BLE001
                 errors["base"] = "cannot_connect"
             else:
@@ -81,3 +82,4 @@ class TrimlightOptionsFlow(config_entries.OptionsFlow):
         )
 
         return self.async_show_form(step_id="init", data_schema=schema)
+
