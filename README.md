@@ -55,12 +55,35 @@ If you do not know your `device_id`, use your existing Trimlight scripts or othe
 
 ### HACS
 
-If you use HACS:
+This repository uses the HACS integration layout and includes `hacs.json`.
+HACS requires a **public GitHub repository**; a private repository cannot be
+installed by adding its URL, even when it belongs to your GitHub account.
 
-1. Open `HACS`.
-2. Add this repository as a custom integration repository if needed.
-3. Download `Trimlight`.
-4. Restart Home Assistant.
+Before the first HACS installation, the repository owner must make the reviewed
+repository public and merge the feature pull requests into `main` in order:
+#1 (pattern editor), #2 (controller management), then #3 (schedules/playlists).
+The feature code is already pushed on GitHub, but an unmerged branch is not what
+a normal repository-link installation downloads. Without a published GitHub
+release, HACS downloads the default branch. This is a beta for Home Assistant
+and physical-controller testing; offline tests do not establish hardware support.
+
+Once those publishing steps are complete:
+
+1. Open **HACS > three-dot menu > Custom repositories**.
+2. Enter `https://github.com/dwheeler1234/Trimlight`.
+3. Select **Integration**, then **Add**.
+4. Find **Trimlight** and select **Download**.
+5. Restart Home Assistant, then add **Trimlight** under **Settings > Devices & Services**.
+
+For updates, use HACS **Update information** and **Redownload** if needed, then
+restart Home Assistant. Back up your existing integration before the first beta
+installation. No GitHub release has been published by these instructions.
+
+HACS installs the backend under `custom_components/trimlight`. The optional
+pattern card in the repository's top-level `www` folder is **not** copied by
+an integration download. Install/update that JavaScript file separately using
+the Custom Pattern Editor instructions below. Native editor entities work
+without the optional card.
 
 ### Manual Installation
 
@@ -218,7 +241,7 @@ To install the matching card:
 
 1. Copy `www/trimlight-pattern-card.js` into your Home Assistant configuration
    folder at `www/trimlight-pattern-card.js`.
-2. Add `/local/trimlight-pattern-card.js?v=3` under **Settings > Dashboards >
+2. Add `/local/trimlight-pattern-card.js?v=4` under **Settings > Dashboards >
    Resources** as a **JavaScript module**. If the Resources menu is hidden, enable
    Advanced Mode in your user profile. Restart Home Assistant once if you just
    created the `www` folder, then reload the browser.
