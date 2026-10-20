@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from homeassistant.exceptions import HomeAssistantError
 
 from .controls import require_success
-from .const import build_builtin_presets_from_effects
+from .const import build_builtin_presets_from_effects, build_builtin_presets_static
 from . import validation as v
 
 # Required fields and their broad types. Detailed bounds and relationships are checked below.
@@ -28,6 +28,7 @@ READ_ACTIONS = {"list_devices", "list_groups", "get_backup"}
 
 
 class ManagementController:
+    fields = ACTION_FIELDS
     def __init__(self, runtime):
         self.runtime = runtime
         self.api = runtime.api
@@ -36,6 +37,18 @@ class ManagementController:
         result = await awaitable
         require_success(result)
         return result
+
+    def cancel_pending(self) -> None:
+        for field in ("builtin_reapply_handle", "custom_reapply_handle", "speed_reapply_handle", "verify_refresh_handle"):
+            handle = getattr(self.runtime, field)
+            if handle is not None:
+                handle.cancel()
+                setattr(self.runtime, field, None)
+        self.runtime.pending_transition = None
+        self.runtime.pending_speed = None
+        self.runtime.pending_speed_until = None
+        self.runtime.forced_on_until = None
+        self.runtime.forced_off_until = None
 
     async def detail(self) -> dict:
         result = await self.checked(self.api.get_device_detail())
@@ -55,20 +68,22 @@ class ManagementController:
     def publish_effect(self, effect: dict | None, deleted_id: int | None = None) -> None:
         state = dict(self.runtime.coordinator.data or {})
         target = deleted_id if effect is None else effect["id"]
+        builtin_changed = (effect is not None and effect.get("category") == 0) or any(
+            p.get("id") == target and p.get("category") == 0 for p in state.get("effects") or [])
         for field in ("effects", "custom_effects"):
             rows = [p for p in (state.get(field) or []) if p.get("id") != target]
             if effect is not None and (field == "effects" or effect.get("category") in (1, 2)):
                 rows.append(deepcopy(effect))
             state[field] = rows
         self.runtime.custom_cache = deepcopy(state["custom_effects"])
-        if effect is not None and effect.get("category") == 0:
-            self.runtime.builtins = build_builtin_presets_from_effects(state["effects"])
+        if builtin_changed:
+            self.runtime.builtins = build_builtin_presets_from_effects(state["effects"]) or build_builtin_presets_static()
         self.runtime.coordinator.async_set_updated_data(state)
 
     async def execute(self, action: str, data: dict) -> dict:
-        if action not in ACTION_FIELDS:
+        if action not in self.fields:
             raise HomeAssistantError("Unknown Trimlight action")
-        if set(data) != set(ACTION_FIELDS[action]):
+        if set(data) != set(self.fields[action]):
             raise HomeAssistantError("Provide exactly the fields documented for this action")
         try:
             async with self.runtime.management_lock:
@@ -104,7 +119,9 @@ class ManagementController:
             backup = await self.checked(self.api.get_backup())
             if (backup.get("payload") or {}).get("backupKey") != key:
                 raise ValueError("The backup key does not match this controller's current backup")
-            return await self.refresh(await self.checked(self.api.restore_backup(key)))
+            result = await self.checked(self.api.restore_backup(key))
+            self.cancel_pending()
+            return await self.refresh(result)
         if action in {"rename_preset", "duplicate_preset", "update_preset", "delete_preset"}:
             eid = v.effect_id(data["effect_id"])
             payload = await self.detail()
@@ -112,7 +129,8 @@ class ManagementController:
             if original is None:
                 raise ValueError("The saved preset ID does not exist on this controller")
             if action == "delete_preset":
-                referenced = any(p.get("effectId") == eid for p in payload.get("daily", []) + payload.get("calendar", []))
+                referenced = any(p.get("effectId") == eid and p.get("enable", True) for p in payload.get("daily", []))
+                referenced |= any(p.get("effectId") == eid for p in payload.get("calendar", []))
                 referenced |= eid in (payload.get("combinedEffect") or {}).get("effectIds", [])
                 referenced |= any(p.get("targetEffect") == eid for p in payload.get("overlayEffects", []))
                 if referenced:
