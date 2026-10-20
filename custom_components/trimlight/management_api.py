@@ -3,6 +3,18 @@ from __future__ import annotations
 
 
 class ManagementApi:
+    async def save_daily_schedule(self, schedule: dict) -> dict:
+        return await self._device_command("daily/save", schedule)
+
+    async def save_calendar_schedule(self, schedule: dict) -> dict:
+        return await self._device_command("calendar/save", schedule)
+
+    async def delete_calendar_schedule(self, schedule_id: int) -> dict:
+        return await self._device_command("calendar/delete", {"id": schedule_id})
+
+    async def save_playlist(self, effect_ids: list[int], interval: int) -> dict:
+        return await self._device_command("combined-effect/save", {"effectIds": effect_ids, "interval": interval})
+
     @property
     def device_id(self) -> str:
         return self._creds.device_id
