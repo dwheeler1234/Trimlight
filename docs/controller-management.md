@@ -95,7 +95,9 @@ Preset edits validate a fresh saved definition before writing it. Renaming/editi
 does not intentionally run the effect. Duplicate creates a copy, and errors or
 missing returned IDs never create a fabricated local preset. At most 60 saved
 effects are supported. Deletion is rejected while the preset is referenced by a
-daily/calendar schedule, combined-effect playlist, or overlay; remove references first.
+enabled daily schedule, calendar schedule, combined-effect playlist, or overlay;
+remove references first. Disabled daily definitions may retain a missing effect
+ID, but cannot be enabled until that reference is corrected.
 The API does not promise transactionality against simultaneous app edits.
 
 ### Overlays and groups
