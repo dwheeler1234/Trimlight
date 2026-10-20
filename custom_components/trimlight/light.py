@@ -14,6 +14,7 @@ from .controls import require_success, solid_rgb
 from .data import get_data
 from .debug import async_log_event
 from .entity import TrimlightEntity
+from .editor import PatternEditorEntity
 
 
 async def async_setup_entry(
@@ -21,7 +22,46 @@ async def async_setup_entry(
 ) -> None:
     data = get_data(hass, entry.entry_id)
     coordinator = data.coordinator
-    async_add_entities([TrimlightLight(hass, entry.entry_id, coordinator)])
+    async_add_entities([
+        TrimlightLight(hass, entry.entry_id, coordinator),
+        PatternColorLight(hass, entry.entry_id, coordinator),
+    ])
+
+
+class PatternColorLight(PatternEditorEntity, LightEntity):
+    """A local color-picker entity for the selected draft entry."""
+    _attr_name = "Trimlight Pattern Entry Color"
+    _attr_supported_color_modes = {ColorMode.RGB}
+    _attr_color_mode = ColorMode.RGB
+
+    def __init__(self, hass, entry_id, coordinator) -> None:
+        super().__init__(hass, entry_id, coordinator)
+        self._attr_unique_id = f"{entry_id}_pattern_entry_color"
+
+    @property
+    def rgb_color(self) -> tuple[int, int, int]:
+        color = self.draft.selected_pixel["color"]
+        return color >> 16, (color >> 8) & 255, color & 255
+
+    @property
+    def brightness(self) -> int:
+        return self.draft.brightness
+
+    @property
+    def is_on(self) -> bool:
+        return not self.draft.selected_pixel["disable"]
+
+    async def async_turn_on(self, **kwargs: Any) -> None:
+        if ATTR_RGB_COLOR in kwargs:
+            self.edit_draft("set_rgb", kwargs[ATTR_RGB_COLOR])
+        if ATTR_BRIGHTNESS in kwargs:
+            self.edit_draft("set_number", "brightness", kwargs[ATTR_BRIGHTNESS])
+        self.draft.selected_pixel["disable"] = False
+        self.notify_draft()
+
+    async def async_turn_off(self, **kwargs: Any) -> None:
+        self.draft.selected_pixel["disable"] = True
+        self.notify_draft()
 
 
 class TrimlightLight(TrimlightEntity, LightEntity):
