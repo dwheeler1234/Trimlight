@@ -244,3 +244,147 @@ sync_group:
       required: true
       selector:
         text: {}
+
+get_schedules:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: trimlight
+set_daily_schedule:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: trimlight
+    schedule_id:
+      required: true
+      selector:
+        number:
+          min: 0
+          max: 1
+          mode: box
+    enabled:
+      required: true
+      selector:
+        boolean: {}
+    effect_id:
+      required: true
+      selector:
+        number:
+          min: 0
+          max: 200
+          mode: box
+    repetition:
+      required: true
+      selector:
+        select:
+          options:
+            - today_only
+            - everyday
+            - weekdays
+            - weekend
+    start_time:
+      required: true
+      selector:
+        object: {}
+    end_time:
+      required: true
+      selector:
+        object: {}
+enable_daily_schedule:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: trimlight
+    schedule_id:
+      required: true
+      selector:
+        number:
+          min: 0
+          max: 1
+          mode: box
+    enabled:
+      required: true
+      selector:
+        boolean: {}
+save_calendar_schedule:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: trimlight
+    schedule_id:
+      required: true
+      selector:
+        number:
+          min: 0
+          max: 59
+          mode: box
+    effect_id:
+      required: true
+      selector:
+        number:
+          min: 0
+          max: 200
+          mode: box
+    start_date:
+      required: true
+      selector:
+        object: {}
+    end_date:
+      required: true
+      selector:
+        object: {}
+    start_time:
+      required: true
+      selector:
+        object: {}
+    end_time:
+      required: true
+      selector:
+        object: {}
+delete_calendar_schedule:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: trimlight
+    schedule_id:
+      required: true
+      selector:
+        number:
+          min: 0
+          max: 59
+          mode: box
+set_playlist:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: trimlight
+    effect_ids:
+      required: true
+      selector:
+        object: {}
+    interval:
+      required: true
+      selector:
+        number:
+          min: 1
+          max: 2147483647
+          mode: box
+run_playlist:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: trimlight
