@@ -160,7 +160,7 @@ class TrimlightPatternCard extends HTMLElement {
       const color = this._customColors[slot];
       return `<div class="custom-cell"><button type="button" class="swatch" data-color="${color}" style="--bulb:${color};--ink:${ink(color)}" aria-label="Apply custom color ${slot + 1}" title="Custom color ${slot + 1}" ${disabled}></button><label class="custom-edit" title="Edit custom color ${slot + 1}">✎<input type="color" data-custom-slot="${slot}" aria-label="Edit custom color ${slot + 1}" value="${color}" ${disabled}></label></div>`;
     };
-    const swatches = PALETTE.slice(0, 7).map(fixedSwatch).join("") + customSwatch(0) + customSwatch(1) + PALETTE.slice(7).map(fixedSwatch).join("");
+    const swatches = PALETTE.map(fixedSwatch).join("") + customSwatch(0) + customSwatch(1);
     const extras = this._paletteExpanded ? Array.from({length:14}, (_, i) => customSwatch(i + 2)).join("") : "";
     const optionList = (key) => (this._state(key)?.attributes.options || []).map((value) => `<option value="${esc(value)}" ${value === this._value(key) ? "selected" : ""}>${esc(value)}</option>`).join("");
     const range = (key, icon, label) => {
