@@ -90,8 +90,50 @@ class TrimlightPatternCard extends HTMLElement {
     if (!this._pixel().count) await this._setNumber("count", 1);
   }
 
+  async _openEntry(index) {
+    await this._perform(() => this._setNumber("entry", index));
+    if (!this._error && Number(this._value("entry")) === Number(index)) this._showCountDialog(Number(index));
+  }
+
+  async _saveEntryCount(index, value) {
+    await this._perform(async () => {
+      if (!Number.isInteger(value) || value < 0 || value > 60) throw new Error("Pixel count must be a whole number from 0 to 60.");
+      // Another dashboard may have changed the selected entry while the dialog was open.
+      await this._setNumber("entry", index);
+      await this._setNumber("count", value);
+    }, "Entry count updated.");
+  }
+
+  _showCountDialog(index) {
+    const dialog = document.createElement("dialog");
+    dialog.setAttribute("aria-labelledby", "entry-count-title");
+    dialog.innerHTML = `<form><h3 id="entry-count-title">Position ${index + 1}</h3><label>Pixel count<input type="number" name="count" min="0" max="60" step="1" required value="${Number(this._pixel().count) || 0}"></label><p class="hint">Choose 0–60 pixels. Zero leaves this position empty.</p><div class="actions"><button type="button" data-cancel>Cancel</button><button type="submit" class="primary">Save</button></div></form>`;
+    this._countDialog = dialog;
+    this.shadowRoot.append(dialog);
+    dialog.addEventListener("close", () => {
+      this._countDialog = null;
+      dialog.remove();
+      this._render();
+      this.shadowRoot.querySelector(`[data-entry="${index}"]`)?.focus();
+    });
+    dialog.querySelector("[data-cancel]").onclick = () => dialog.close();
+    dialog.querySelector("form").onsubmit = (event) => {
+      event.preventDefault();
+      const input = dialog.querySelector("input");
+      if (!input.reportValidity()) return;
+      const value = input.valueAsNumber;
+      dialog.close();
+      this._saveEntryCount(index, value);
+    };
+    dialog.showModal();
+    dialog.querySelector("input").focus();
+    dialog.querySelector("input").select();
+  }
+
   _render() {
     if (!this._config || !this._hass) return;
+    // Keep an in-progress count intact when Home Assistant sends state updates.
+    if (this._countDialog?.open) return;
     const attrs = this._attributes();
     const index = Number(this._value("entry")) || 0;
     const pixel = this._pixel();
@@ -121,7 +163,8 @@ class TrimlightPatternCard extends HTMLElement {
       .source{border:0;border-bottom:1px solid var(--divider-color);border-radius:0;margin-bottom:12px;background:transparent;padding:4px 0 12px;font-size:16px}
       .grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px 10px;justify-items:center}.entry{font-size:14px;max-width:46px}.entry.selected{outline:3px solid var(--primary-color);outline-offset:3px}.entry.off::after{content:"";position:absolute;inset:5px;border-top:2px solid var(--primary-color);transform:translateY(50%) rotate(-45deg)}
       .expand{display:block;margin:10px auto -4px;background:none;border:0;color:var(--primary-color);width:44px;height:32px;font-size:24px}
-      .edit-row{display:grid;grid-template-columns:1fr 92px;gap:10px;align-items:end;margin-top:16px}.edit-row label{font-size:12px;color:var(--secondary-text-color)}.edit-row input{margin-top:5px}.disabled-toggle{display:flex;align-items:center;gap:8px;font-size:13px;margin-top:10px;color:var(--secondary-text-color)}input[type=checkbox]{accent-color:var(--primary-color);width:18px;height:18px}
+      .edit-row{display:grid;grid-template-columns:1fr;gap:10px;align-items:end;margin-top:16px}.edit-row label{font-size:12px;color:var(--secondary-text-color)}.edit-row input{margin-top:5px}.disabled-toggle{display:flex;align-items:center;gap:8px;font-size:13px;margin-top:10px;color:var(--secondary-text-color)}input[type=checkbox]{accent-color:var(--primary-color);width:18px;height:18px}
+      dialog{width:min(320px,calc(100vw - 32px));padding:22px;border:1px solid var(--divider-color);border-radius:16px;background:var(--ha-card-background,var(--card-background-color));color:var(--primary-text-color);font:inherit}dialog::backdrop{background:rgb(0 0 0 / .5)}dialog h3{margin:0 0 18px;font-size:20px}dialog label{display:grid;gap:8px}dialog .hint{margin:10px 0 20px}dialog .actions{justify-content:flex-end}
       .mode{text-transform:uppercase}.range-row{display:flex;align-items:center;gap:10px;margin:12px 0}.range-row ha-icon{--mdc-icon-size:21px;color:var(--secondary-text-color)}.range-row output{font-size:12px;min-width:36px;text-align:right;color:var(--secondary-text-color)}
       input[type=range]{appearance:none;width:100%;height:9px;border-radius:8px;background:linear-gradient(to right,var(--primary-color) 0%,var(--primary-color) var(--fill),var(--divider-color) var(--fill),var(--divider-color) 100%);cursor:pointer}input[type=range]::-webkit-slider-thumb{appearance:none;width:23px;height:23px;border-radius:50%;background:var(--primary-text-color)}input[type=range]::-moz-range-thumb{width:23px;height:23px;border:0;border-radius:50%;background:var(--primary-text-color)}
       .actions{display:flex;gap:8px;flex-wrap:wrap}.actions button{flex:1;min-height:42px;border:1px solid var(--divider-color);border-radius:9px;padding:8px;background:var(--secondary-background-color);color:var(--primary-text-color)}.actions .primary{background:var(--primary-color);color:var(--text-primary-color)}
@@ -137,7 +180,8 @@ class TrimlightPatternCard extends HTMLElement {
           return `<button class="entry ${p.index === index ? "selected" : ""} ${p.disable ? "off" : ""}" data-entry="${p.index}" style="--bulb:${color};--ink:${ink(color)}" aria-label="Entry ${p.index + 1}: ${p.count} pixels${p.disable ? ", disabled" : ""}" aria-pressed="${p.index === index}" ${disabled}>${Number(p.count) || 0}</button>`;
         }).join("")}</div>
         <button class="expand" aria-label="${this._expanded ? "Collapse pattern" : "Show all 30 entries"}" aria-expanded="${this._expanded}">${this._expanded ? "⌃" : "⌄"}</button>
-        <div class="edit-row"><label>Pattern name<input type="text" data-name maxlength="64" value="${esc(this._value("name"))}" ${disabled}></label><label>Entry ${index + 1} count<input type="number" data-count min="0" max="60" step="1" value="${Number(pixel.count) || 0}" ${disabled}></label></div>
+        <p class="hint">Tap a position to edit its pixel count.</p>
+        <div class="edit-row"><label>Pattern name<input type="text" data-name maxlength="64" value="${esc(this._value("name"))}" ${disabled}></label></div>
         <label class="disabled-toggle"><input type="checkbox" data-disabled ${pixel.disable ? "checked" : ""} ${disabled}>Disable selected entry</label>
       </div>
       <div class="panel"><select class="mode" data-select="mode" aria-label="Pattern animation mode" ${disabled}>${optionList("mode")}</select>${range("brightness", "mdi:brightness-6", "Pattern brightness")}${range("speed", "mdi:speedometer", "Pattern speed")}</div>
@@ -151,14 +195,13 @@ class TrimlightPatternCard extends HTMLElement {
   _bind() {
     const root = this.shadowRoot;
     root.querySelector(".expand").onclick = () => { this._expanded = !this._expanded; this._render(); };
-    root.querySelectorAll("[data-entry]").forEach((el) => { el.onclick = () => this._perform(() => this._setNumber("entry", el.dataset.entry)); });
+    root.querySelectorAll("[data-entry]").forEach((el) => { el.onclick = () => this._openEntry(el.dataset.entry); });
     root.querySelectorAll("[data-color]").forEach((el) => { el.onclick = () => this._perform(() => el.dataset.color === "disabled" ? this._call("disabled", "turn_on", {}, () => this._pixel().disable) : this._applyColor(el.dataset.color)); });
     root.querySelector("input[type=color]").onchange = (event) => { const value = event.target.value; this._perform(() => this._applyColor(value)); };
     root.querySelector("[data-name]").onchange = (event) => {
       const value = event.target.value.trim();
       this._perform(() => this._call("name", "set_value", {value}, () => this._value("name") === value));
     };
-    root.querySelector("[data-count]").onchange = (event) => { const value = event.target.valueAsNumber; this._perform(() => this._setNumber("count", value)); };
     root.querySelector("[data-disabled]").onchange = (event) => { const value = event.target.checked; this._perform(() => this._call("disabled", value ? "turn_on" : "turn_off", {}, () => Boolean(this._pixel().disable) === value)); };
     root.querySelectorAll("[data-select]").forEach((el) => { el.onchange = () => { const key = el.dataset.select, value = el.value; this._perform(() => this._call(key, "select_option", {option:value}, () => this._value(key) === value)); }; });
     root.querySelectorAll("[data-range]").forEach((el) => {
