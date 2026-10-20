@@ -241,6 +241,14 @@ class ManagementTests(unittest.TestCase):
         self.assertNotIn("Private", str(result))
         self.assertNotIn("backupKey", str(result))
 
+    def test_related_select_lookup_uses_this_config_entry_unique_id(self):
+        entity, _, _, _ = runtime()
+        lookup = Mock(return_value="select.renamed_controller_custom")
+        f.module("homeassistant.helpers.entity_registry", async_get=lambda hass:SimpleNamespace(async_get_entity_id=lookup))
+        entity._hass.states = SimpleNamespace(get=Mock(return_value="correct controller state"))
+        self.assertEqual(entity._related_select_state("custom_select"), "correct controller state")
+        lookup.assert_called_once_with("select", "trimlight", "test_custom_select")
+
 
 for name, method in list(vars(ManagementTests).items()):
     if name.startswith("test_") and inspect.iscoroutinefunction(method):
