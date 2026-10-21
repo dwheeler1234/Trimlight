@@ -41,7 +41,7 @@ async def async_setup_entry(
         TrimlightEffectLengthNumber(hass, entry.entry_id, coordinator),
         *[PatternNumber(hass, entry.entry_id, coordinator, key, name, low, high)
           for key, name, low, high in (
-              ("selected_index", "Entry", 0, 29), ("count", "Pixel Count", 0, 60),
+              ("selected_index", "Entry", 0, 29), ("count", "Pixel Count", 0, 99),
               ("speed", "Speed", 0, 255), ("brightness", "Brightness", 0, 255))],
     ])
 
