@@ -69,7 +69,7 @@ async function main() {
   await card._applyColor("#00ff00");
   assert.equal(card._pixel().count, 5);
   assert.equal(card._countDialog == null, true);
-  assert.equal((card.shadowRoot.innerHTML.match(/data-edit-entry="/g) || []).length, 30);
+  assert.equal(card.shadowRoot.innerHTML.includes("data-edit-entry="), false);
   const markupBeforeDragUpdate = card.shadowRoot.innerHTML;
   card._dragColor = "#123456";
   card._expanded = false;
