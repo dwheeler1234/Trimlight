@@ -70,6 +70,18 @@ async function main() {
   assert.equal(card._pixel().count, 5);
   assert.equal(card._countDialog == null, true);
   assert.equal((card.shadowRoot.innerHTML.match(/data-edit-entry="/g) || []).length, 30);
+  await card._dropColor(7, "#123456");
+  assert.equal(card._pixel().color, 0x123456);
+  assert.equal(card._pixel().count, 5);
+  assert.equal(card._countDialog == null, true);
+  const beforeInvalidDrop = context.window.mockCalls.length;
+  await card._dropColor(30, "#abcdef");
+  await card._dropColor(7, "not-a-color");
+  assert.equal(context.window.mockCalls.length, beforeInvalidDrop);
+  await card._dropColor(6, "#abcdef");
+  assert.equal(Number(card._value("entry")), 6);
+  assert.equal(card._pixel().count, 1);
+  assert.equal(card._pixel().color, 0xabcdef);
   await card._openEntry(7);
   assert.equal(card._countDialog.open, true);
   assert.match(card._countDialog.innerHTML, /Position 8/);
