@@ -196,6 +196,8 @@ class TrimlightPatternCard extends HTMLElement {
   }
 
   _render() {
+    // Keep native drag source and destination nodes alive during HA updates.
+    if (this._dragColor) return;
     if (!this._config || !this._hass) return;
     // Keep an in-progress count intact when Home Assistant sends state updates.
     if (this._countDialog?.open || this._patternNameDialog?.open) return;
@@ -283,9 +285,11 @@ class TrimlightPatternCard extends HTMLElement {
       };
       el.ondragleave = () => el.classList.remove("drop-target");
       el.ondrop = (event) => {
-        if (!this._dragColor || locked) return;
+        if (locked) return;
+        const color = event.dataTransfer.getData("application/x-trimlight-color") || this._dragColor;
+        if (!/^#[0-9a-f]{6}$/i.test(color || "")) return;
         event.preventDefault();
-        const color = this._dragColor; this._dragColor = null;
+        this._dragColor = null;
         el.classList.remove("drop-target");
         this._dropColor(el.dataset.entry, color);
       };
@@ -297,10 +301,12 @@ class TrimlightPatternCard extends HTMLElement {
         this._dragColor = el.dataset.color;
         event.dataTransfer.effectAllowed = "copy";
         event.dataTransfer.setData("text/plain", this._dragColor);
+        event.dataTransfer.setData("application/x-trimlight-color", this._dragColor);
       };
       el.ondragend = () => {
         this._dragColor = null;
         root.querySelectorAll(".drop-target").forEach((target) => target.classList.remove("drop-target"));
+        this._render();
       };
     });
     root.querySelectorAll("[data-custom-slot]").forEach((el) => { el.onchange = () => {

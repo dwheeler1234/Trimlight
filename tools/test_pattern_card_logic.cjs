@@ -70,7 +70,15 @@ async function main() {
   assert.equal(card._pixel().count, 5);
   assert.equal(card._countDialog == null, true);
   assert.equal((card.shadowRoot.innerHTML.match(/data-edit-entry="/g) || []).length, 30);
+  const markupBeforeDragUpdate = card.shadowRoot.innerHTML;
+  card._dragColor = "#123456";
+  card._expanded = false;
+  card._render();
+  assert.equal(card.shadowRoot.innerHTML, markupBeforeDragUpdate);
+  card._dragColor = null;
+  card._expanded = true;
   await card._dropColor(7, "#123456");
+  assert.match(card.shadowRoot.innerHTML, /data-entry="7" style="--bulb:#123456/);
   assert.equal(card._pixel().color, 0x123456);
   assert.equal(card._pixel().count, 5);
   assert.equal(card._countDialog == null, true);
