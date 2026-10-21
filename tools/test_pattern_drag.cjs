@@ -26,7 +26,18 @@ const { chromium } = require('playwright');
     assert.equal(result.pixel.count, 12);
     assert.equal(result.bulb, '#00ff00');
     assert.equal(result.calls.at(-1).domain, 'light');
+    await page.locator('[data-color="disabled"]').dragTo(page.locator('[data-entry="2"]'));
+    await page.waitForFunction(() => !document.querySelector('trimlight-pattern-card')._busy);
+    const disabled = await page.evaluate(() => {
+      const card = document.querySelector('trimlight-pattern-card');
+      return {pixel:card._attributes().pixels[2], crossed:card.shadowRoot.querySelector('[data-entry="2"]').classList.contains('off'), lastCall:window.mockCalls.at(-1)};
+    });
+    assert.equal(disabled.pixel.disable, true);
+    assert.equal(disabled.pixel.color, 0x00ff00);
+    assert.equal(disabled.pixel.count, 12);
+    assert.equal(disabled.crossed, true);
+    assert.equal(disabled.lastCall.domain, 'switch');
     assert.deepEqual(errors, []);
-    console.log('PASS: native browser drag sends color service, updates destination color and preserves count without browser errors');
+    console.log('PASS: native browser drag sends color service, updates destination color and preserves count; dragging X disables destination without changing color/count or browser errors');
   } finally { await browser.close(); }
 })().catch(error => {console.error(error);process.exitCode=1});
