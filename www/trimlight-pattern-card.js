@@ -92,10 +92,10 @@ class TrimlightPatternCard extends HTMLElement {
     await this._call(key, "set_value", {value:Number(value)}, () => Number(this._value(key)) === Number(value));
   }
 
-  async _applyColor(color) {
+  async _applyColor(color, preserveCount = false) {
     const rgb = [1, 3, 5].map((start) => parseInt(color.slice(start, start + 2), 16));
     await this._call("color", "turn_on", {rgb_color:rgb}, () => this._pixel().color === parseInt(color.slice(1), 16) && !this._pixel().disable);
-    if (!this._pixel().count) await this._setNumber("count", 1);
+    if (!preserveCount && !this._pixel().count) await this._setNumber("count", 1);
   }
 
   async _dropColor(index, color) {
@@ -106,7 +106,7 @@ class TrimlightPatternCard extends HTMLElement {
       if (color === "disabled") {
         await this._call("disabled", "turn_on", {}, () => this._pixel().disable);
       } else {
-        await this._applyColor(color);
+        await this._applyColor(color, true);
       }
     });
   }
