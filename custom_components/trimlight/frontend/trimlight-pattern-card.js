@@ -98,6 +98,15 @@ class TrimlightPatternCard extends HTMLElement {
     if (!this._pixel().count) await this._setNumber("count", 1);
   }
 
+  async _dropColor(index, color) {
+    const target = Number(index);
+    if (!Number.isInteger(target) || target < 0 || target > 29 || !/^#[0-9a-f]{6}$/i.test(color)) return;
+    await this._perform(async () => {
+      await this._setNumber("entry", target);
+      await this._applyColor(color);
+    });
+  }
+
   _setCustomColor(slot, color) {
     if (!Number.isInteger(slot) || slot < 0 || slot >= 16 || !/^#[0-9a-f]{6}$/i.test(color)) throw new Error("Invalid custom color slot");
     this._customColors[slot] = color.toLowerCase();
@@ -197,10 +206,10 @@ class TrimlightPatternCard extends HTMLElement {
     const locked = this._busy || missing.length > 0;
     const disabled = locked ? "disabled" : "";
     const pixels = Array.from({length:30}, (_, i) => (attrs.pixels || []).find((p) => p.index === i) || {index:i, color:0, count:0, disable:false});
-    const fixedSwatch = ([label, color]) => `<button type="button" class="swatch ${color ? "" : "cross"}" data-color="${color || "disabled"}" style="--bulb:${color || "#000000"};--ink:${color ? ink(color) : "#ff4040"}" title="${label === "X" ? "Disable selected entry" : label}" aria-label="${label === "X" ? "Disable selected entry" : `Set entry color ${label}`}" ${disabled}>${label}</button>`;
+    const fixedSwatch = ([label, color]) => `<button type="button" class="swatch ${color ? "" : "cross"}" data-color="${color || "disabled"}" draggable="${Boolean(color) && !locked}" style="--bulb:${color || "#000000"};--ink:${color ? ink(color) : "#ff4040"}" title="${label === "X" ? "Disable selected entry" : label}" aria-label="${label === "X" ? "Disable selected entry" : `Set entry color ${label}`}" ${disabled}>${label}</button>`;
     const customSwatch = (slot) => {
       const color = this._customColors[slot];
-      return `<div class="custom-cell"><button type="button" class="swatch" data-color="${color}" style="--bulb:${color};--ink:${ink(color)}" aria-label="Apply custom color ${slot + 1}" title="Custom color ${slot + 1}" ${disabled}></button><label class="custom-edit" title="Edit custom color ${slot + 1}">✎<input type="color" data-custom-slot="${slot}" aria-label="Edit custom color ${slot + 1}" value="${color}" ${disabled}></label></div>`;
+      return `<div class="custom-cell"><button type="button" class="swatch" data-color="${color}" draggable="${!locked}" style="--bulb:${color};--ink:${ink(color)}" aria-label="Apply custom color ${slot + 1}" title="Custom color ${slot + 1}" ${disabled}></button><label class="custom-edit" title="Edit custom color ${slot + 1}">✎<input type="color" data-custom-slot="${slot}" aria-label="Edit custom color ${slot + 1}" value="${color}" ${disabled}></label></div>`;
     };
     const swatches = PALETTE.map(fixedSwatch).join("") + customSwatch(0) + customSwatch(1);
     const extras = Array.from({length:7}, (_, i) => customSwatch(i + 2)).join("")
@@ -230,7 +239,7 @@ class TrimlightPatternCard extends HTMLElement {
       .custom-cell{position:relative;width:100%;max-width:44px;aspect-ratio:1}.custom-cell .swatch{height:100%;max-width:none}.custom-edit{position:absolute;right:-3px;bottom:-3px;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:13px;background:var(--card-background-color);color:var(--primary-color);border:1px solid var(--divider-color);overflow:hidden}.custom-edit input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}.palette-toggle{grid-column:1/-1;margin:0!important}
       select,input[type=text],input[type=number]{background:var(--card-background-color);color:var(--primary-text-color);border:1px solid var(--divider-color);border-radius:8px;padding:10px;width:100%;min-width:0}
       .source{border:0;border-bottom:1px solid var(--divider-color);border-radius:0;margin-bottom:12px;background:transparent;padding:4px 0 12px;font-size:16px}
-      .grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px 10px;justify-items:center}.entry{font-size:14px;max-width:46px}.entry-cell{position:relative;width:100%;max-width:46px;aspect-ratio:1}.entry-cell .entry{height:100%}.entry-edit{position:absolute;right:-5px;bottom:-5px;width:22px;height:22px;border-radius:50%;padding:0;display:grid;place-items:center;font-size:14px;background:var(--card-background-color);color:var(--primary-color);border:1px solid var(--divider-color);cursor:pointer;z-index:1}.entry.selected{outline:3px solid var(--primary-color);outline-offset:3px}.entry.off::after{content:"";position:absolute;inset:5px;border-top:2px solid var(--primary-color);transform:translateY(50%) rotate(-45deg)}
+      .grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px 10px;justify-items:center}.entry{font-size:14px;max-width:46px}.entry-cell{position:relative;width:100%;max-width:46px;aspect-ratio:1}.entry-cell .entry{height:100%}.entry-edit{position:absolute;right:-5px;bottom:-5px;width:22px;height:22px;border-radius:50%;padding:0;display:grid;place-items:center;font-size:14px;background:var(--card-background-color);color:var(--primary-color);border:1px solid var(--divider-color);cursor:pointer;z-index:1}.swatch[draggable="true"]{cursor:grab}.entry.drop-target{outline:3px dashed var(--primary-color);outline-offset:3px}.entry.selected{outline:3px solid var(--primary-color);outline-offset:3px}.entry.off::after{content:"";position:absolute;inset:5px;border-top:2px solid var(--primary-color);transform:translateY(50%) rotate(-45deg)}
       .expand{display:block;margin:10px auto -4px;background:none;border:0;color:var(--primary-color);width:44px;height:32px;font-size:24px}
       .edit-row{display:grid;grid-template-columns:1fr;gap:10px;align-items:end;margin-top:16px}.edit-row label{font-size:12px;color:var(--secondary-text-color)}.edit-row input{margin-top:5px}.disabled-toggle{display:flex;align-items:center;gap:8px;font-size:13px;margin-top:10px;color:var(--secondary-text-color)}input[type=checkbox]{accent-color:var(--primary-color);width:18px;height:18px}
       dialog{width:min(320px,calc(100vw - 32px));padding:22px;border:1px solid var(--divider-color);border-radius:16px;background:var(--ha-card-background,var(--card-background-color));color:var(--primary-text-color);font:inherit}dialog::backdrop{background:rgb(0 0 0 / .5)}dialog h3{margin:0 0 18px;font-size:20px}dialog label{display:grid;gap:8px}dialog .hint{margin:10px 0 20px}dialog .actions{justify-content:flex-end}
@@ -242,7 +251,7 @@ class TrimlightPatternCard extends HTMLElement {
     </style><ha-card><div class="body">
       <div><div class="title">${esc(this._config.title || "Trimlight")} <ha-icon icon="mdi:palette-outline"></ha-icon></div><div class="subtitle">Custom pattern editor</div></div>
       ${missing.length ? `<p class="message error">Missing editor entities: ${esc(missing.map((key) => this._config.entities[key]).join(", "))}</p>` : ""}
-      <div class="panel palette">${swatches}${extras}<button class="expand palette-toggle" aria-label="${this._paletteExpanded ? "Hide fourth color row" : "Show fourth color row"}" aria-expanded="${this._paletteExpanded}">${this._paletteExpanded ? "⌃" : "⌄"}</button><p class="palette-note">Choose a color for entry ${index + 1} · ✎ edits custom colors</p></div>
+      <div class="panel palette">${swatches}${extras}<button class="expand palette-toggle" aria-label="${this._paletteExpanded ? "Hide fourth color row" : "Show fourth color row"}" aria-expanded="${this._paletteExpanded}">${this._paletteExpanded ? "⌃" : "⌄"}</button><p class="palette-note">Click a color for entry ${index + 1}, or drag it onto a pattern slot · ✎ edits custom colors</p></div>
       <div class="panel"><label class="hint">Pattern name<select class="source" data-select="source" aria-label="Pattern name" ${disabled}>${optionList("source")}</select></label>
         <div class="grid">${pixels.slice(0, this._expanded ? 30 : 6).map((p) => {
           const color = p.count ? hex(p.color) : "#000000";
@@ -265,9 +274,35 @@ class TrimlightPatternCard extends HTMLElement {
     const root = this.shadowRoot;
     root.querySelector(".expand:not(.palette-toggle)").onclick = () => { this._expanded = !this._expanded; this._render(); };
     root.querySelector(".palette-toggle").onclick = () => { this._paletteExpanded = !this._paletteExpanded; this._render(); };
-    root.querySelectorAll("[data-entry]").forEach((el) => { el.onclick = () => this._selectEntry(el.dataset.entry); });
+    root.querySelectorAll("[data-entry]").forEach((el) => {
+      el.onclick = () => this._selectEntry(el.dataset.entry);
+      el.ondragover = (event) => {
+        if (!this._dragColor || locked) return;
+        event.preventDefault(); event.dataTransfer.dropEffect = "copy";
+        el.classList.add("drop-target");
+      };
+      el.ondragleave = () => el.classList.remove("drop-target");
+      el.ondrop = (event) => {
+        if (!this._dragColor || locked) return;
+        event.preventDefault();
+        const color = this._dragColor; this._dragColor = null;
+        el.classList.remove("drop-target");
+        this._dropColor(el.dataset.entry, color);
+      };
+    });
     root.querySelectorAll("[data-edit-entry]").forEach((el) => { el.onclick = () => this._openEntry(el.dataset.editEntry); });
     root.querySelectorAll("[data-color]").forEach((el) => { el.onclick = () => this._perform(() => el.dataset.color === "disabled" ? this._call("disabled", "turn_on", {}, () => this._pixel().disable) : this._applyColor(el.dataset.color)); });
+    root.querySelectorAll('[data-color][draggable="true"]').forEach((el) => {
+      el.ondragstart = (event) => {
+        this._dragColor = el.dataset.color;
+        event.dataTransfer.effectAllowed = "copy";
+        event.dataTransfer.setData("text/plain", this._dragColor);
+      };
+      el.ondragend = () => {
+        this._dragColor = null;
+        root.querySelectorAll(".drop-target").forEach((target) => target.classList.remove("drop-target"));
+      };
+    });
     root.querySelectorAll("[data-custom-slot]").forEach((el) => { el.onchange = () => {
       const slot = Number(el.dataset.customSlot), color = el.value;
       this._perform(async () => { this._setCustomColor(slot, color); await this._applyColor(color); });
