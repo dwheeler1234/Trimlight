@@ -260,7 +260,7 @@ class TrimlightPatternCard extends HTMLElement {
       <div class="panel palette">${swatches}${extras}<button class="expand palette-toggle" aria-label="${this._paletteExpanded ? "Hide fourth color row" : "Show fourth color row"}" aria-expanded="${this._paletteExpanded}">${this._paletteExpanded ? "⌃" : "⌄"}</button><p class="palette-note">Click a color for entry ${index + 1}, or drag a color or X onto a pattern slot · ✎ edits custom colors</p></div>
       <div class="panel"><label class="hint">Pattern name<select class="source" data-select="source" aria-label="Pattern name" ${disabled}>${optionList("source")}</select></label>
         <div class="grid">${pixels.slice(0, this._expanded ? 30 : 6).map((p) => {
-          const color = p.count ? hex(p.color) : "#000000";
+          const color = hex(p.color);
           return `<div class="entry-cell"><button type="button" class="entry ${p.index === index ? "selected" : ""} ${p.disable ? "off" : ""}" data-entry="${p.index}" style="--bulb:${color};--ink:${ink(color)}" aria-label="Entry ${p.index + 1}: ${p.count} pixels${p.disable ? ", disabled" : ""}" aria-pressed="${p.index === index}" ${disabled}>${Number(p.count) || 0}</button></div>`;
         }).join("")}</div>
         <button class="expand" aria-label="${this._expanded ? "Collapse pattern" : "Show all 30 entries"}" aria-expanded="${this._expanded}">${this._expanded ? "⌃" : "⌄"}</button>
