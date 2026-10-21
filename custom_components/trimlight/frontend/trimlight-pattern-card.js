@@ -128,7 +128,7 @@ class TrimlightPatternCard extends HTMLElement {
 
   async _saveEntryCount(index, value) {
     await this._perform(async () => {
-      if (!Number.isInteger(value) || value < 0 || value > 60) throw new Error("Pixel count must be a whole number from 0 to 60.");
+      if (!Number.isInteger(value) || value < 0 || value > 99) throw new Error("Pixel count must be a whole number from 0 to 99.");
       // Another dashboard may have changed the selected entry while the dialog was open.
       await this._setNumber("entry", index);
       await this._setNumber("count", value);
@@ -138,7 +138,7 @@ class TrimlightPatternCard extends HTMLElement {
   _showCountDialog(index) {
     const dialog = document.createElement("dialog");
     dialog.setAttribute("aria-labelledby", "entry-count-title");
-    dialog.innerHTML = `<form><h3 id="entry-count-title">Position ${index + 1}</h3><label>Pixel count<input type="number" name="count" min="0" max="60" step="1" required value="${Number(this._pixel().count) || 0}"></label><p class="hint">Choose 0–60 pixels. Zero leaves this position empty.</p><div class="actions"><button type="button" data-cancel>Cancel</button><button type="submit" class="primary">Save</button></div></form>`;
+    dialog.innerHTML = `<form><h3 id="entry-count-title">Position ${index + 1}</h3><label>Pixel count<input type="number" name="count" min="0" max="99" step="1" required value="${Number(this._pixel().count) || 0}"></label><p class="hint">Choose 0–99 pixels. Zero leaves this position empty.</p><div class="actions"><button type="button" data-cancel>Cancel</button><button type="submit" class="primary">Save</button></div></form>`;
     this._countDialog = dialog;
     this.shadowRoot.append(dialog);
     dialog.addEventListener("close", () => {
