@@ -212,7 +212,7 @@ class TrimlightPatternCard extends HTMLElement {
     const locked = this._busy || missing.length > 0;
     const disabled = locked ? "disabled" : "";
     const pixels = Array.from({length:30}, (_, i) => (attrs.pixels || []).find((p) => p.index === i) || {index:i, color:0, count:0, disable:false});
-    const fixedSwatch = ([label, color]) => `<button type="button" class="swatch ${color ? "" : "cross"}" data-color="${color || "disabled"}" draggable="${!locked}" style="--bulb:${color || "#000000"};--ink:${color ? ink(color) : "#ff4040"}" title="${label === "X" ? "Disable selected entry" : label}" aria-label="${label === "X" ? "Disable selected entry" : `Set entry color ${label}`}" ${disabled}>${label}</button>`;
+    const fixedSwatch = ([label, color]) => `<button type="button" class="swatch ${color ? "" : "cross"}" data-color="${color || "disabled"}" draggable="${Boolean(color) && !locked}" style="--bulb:${color || "#000000"};--ink:${color ? ink(color) : "#ff4040"}" title="${label === "X" ? "Disable selected entry" : label}" aria-label="${label === "X" ? "Disable selected entry" : `Set entry color ${label}`}" ${disabled}>${label}</button>`;
     const customSwatch = (slot) => {
       const color = this._customColors[slot];
       return `<div class="custom-cell"><button type="button" class="swatch" data-color="${color}" draggable="${!locked}" style="--bulb:${color};--ink:${ink(color)}" aria-label="Apply custom color ${slot + 1}" title="Custom color ${slot + 1}" ${disabled}></button><label class="custom-edit" title="Edit custom color ${slot + 1}">✎<input type="color" data-custom-slot="${slot}" aria-label="Edit custom color ${slot + 1}" value="${color}" ${disabled}></label></div>`;
@@ -239,7 +239,7 @@ class TrimlightPatternCard extends HTMLElement {
       .palette{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;align-items:center;justify-items:center}
       button,input,select{font:inherit}button{cursor:pointer}button:disabled,input:disabled,select:disabled{cursor:wait;opacity:.55}
       .swatch,.entry{border:0;border-radius:50%;aspect-ratio:1;width:100%;max-width:44px;display:grid;place-items:center;background:var(--bulb);color:var(--ink);font-size:12px;padding:0;position:relative}
-      .cross{font-size:24px}.swatch{box-shadow:inset 0 0 0 1px rgb(128 128 128 / .3)}button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--primary-color);outline-offset:3px}
+      .cross{font-size:24px;touch-action:none;user-select:none;cursor:grab}.cross.dragging{cursor:grabbing;outline:2px solid var(--primary-color)}.swatch{box-shadow:inset 0 0 0 1px rgb(128 128 128 / .3)}button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--primary-color);outline-offset:3px}
       .picker{position:relative;display:grid;place-items:center;aspect-ratio:1;width:100%;max-width:44px;border-radius:50%;background:var(--primary-background-color);border:1px solid var(--divider-color);font-size:22px;color:var(--primary-color);overflow:hidden}
       .picker input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}.palette-note{font-size:11px;text-align:center;color:var(--secondary-text-color);grid-column:1/-1;margin:0}
       .custom-cell{position:relative;width:100%;max-width:44px;aspect-ratio:1}.custom-cell .swatch{height:100%;max-width:none}.custom-edit{position:absolute;right:-3px;bottom:-3px;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:13px;background:var(--card-background-color);color:var(--primary-color);border:1px solid var(--divider-color);overflow:hidden}.custom-edit input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}.palette-toggle{grid-column:1/-1;margin:0!important}
@@ -299,7 +299,48 @@ class TrimlightPatternCard extends HTMLElement {
       };
     });
     root.querySelectorAll("[data-edit-entry]").forEach((el) => { el.onclick = () => this._openEntry(el.dataset.editEntry); });
-    root.querySelectorAll("[data-color]").forEach((el) => { el.onclick = () => this._perform(() => el.dataset.color === "disabled" ? this._call("disabled", "turn_on", {}, () => this._pixel().disable) : this._applyColor(el.dataset.color)); });
+    root.querySelectorAll("[data-color]").forEach((el) => { el.onclick = () => { if (this._suppressPaletteClick) { this._suppressPaletteClick = false; return; } return this._perform(() => el.dataset.color === "disabled" ? this._call("disabled", "turn_on", {}, () => this._pixel().disable) : this._applyColor(el.dataset.color)); }; });
+    const disableSwatch = root.querySelector('[data-color="disabled"]');
+    if (disableSwatch) {
+      let gesture = null;
+      const targetAt = (event) => {
+        const hit = root.elementFromPoint(event.clientX, event.clientY);
+        const cell = hit?.closest(".entry-cell");
+        return hit?.closest("[data-entry]") || cell?.querySelector("[data-entry]");
+      };
+      const clearTargets = () => root.querySelectorAll(".drop-target").forEach((el) => el.classList.remove("drop-target"));
+      disableSwatch.onpointerdown = (event) => {
+        if (event.button !== 0 || this._busy || disableSwatch.disabled) return;
+        gesture = {id:event.pointerId, x:event.clientX, y:event.clientY, moved:false};
+        this._dragColor = "disabled";
+        disableSwatch.setPointerCapture(event.pointerId);
+      };
+      disableSwatch.onpointermove = (event) => {
+        if (!gesture || gesture.id !== event.pointerId) return;
+        if (Math.hypot(event.clientX - gesture.x, event.clientY - gesture.y) > 6) gesture.moved = true;
+        if (!gesture.moved) return;
+        disableSwatch.classList.add("dragging");
+        clearTargets(); targetAt(event)?.classList.add("drop-target");
+      };
+      const finish = (event, cancelled = false) => {
+        if (!gesture || gesture.id !== event.pointerId) return;
+        const moved = gesture.moved;
+        const target = moved && !cancelled ? targetAt(event) : null;
+        gesture = null; this._dragColor = null;
+        disableSwatch.classList.remove("dragging"); clearTargets();
+        if (disableSwatch.hasPointerCapture(event.pointerId)) disableSwatch.releasePointerCapture(event.pointerId);
+        if (moved) {
+          event.preventDefault(); this._suppressPaletteClick = true;
+          // Consume only the synthetic click associated with this release.
+          setTimeout(() => { this._suppressPaletteClick = false; }, 0);
+        }
+        if (target && !target.disabled) this._dropColor(target.dataset.entry, "disabled");
+        else if (moved || cancelled) this._render();
+      };
+      disableSwatch.onpointerup = (event) => finish(event);
+      disableSwatch.onpointercancel = (event) => finish(event, true);
+      disableSwatch.onlostpointercapture = (event) => finish(event, true);
+    }
     root.querySelectorAll('[data-color][draggable="true"]').forEach((el) => {
       el.ondragstart = (event) => {
         this._dragColor = el.dataset.color;

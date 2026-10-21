@@ -26,7 +26,12 @@ const { chromium } = require('playwright');
     assert.equal(result.pixel.count, 12);
     assert.equal(result.bulb, '#00ff00');
     assert.equal(result.calls.at(-1).domain, 'light');
-    await page.locator('[data-color="disabled"]').dragTo(page.locator('[data-entry="2"]'));
+    const sourceBox = await page.locator('[data-color="disabled"]').boundingBox();
+    const targetBox = await page.locator('[data-entry="2"]').boundingBox();
+    await page.mouse.move(sourceBox.x + sourceBox.width / 2, sourceBox.y + sourceBox.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(targetBox.x + targetBox.width / 2, targetBox.y + targetBox.height / 2, {steps:12});
+    await page.mouse.up();
     await page.waitForFunction(() => !document.querySelector('trimlight-pattern-card')._busy);
     const disabled = await page.evaluate(() => {
       const card = document.querySelector('trimlight-pattern-card');
@@ -37,6 +42,11 @@ const { chromium } = require('playwright');
     assert.equal(disabled.pixel.count, 12);
     assert.equal(disabled.crossed, true);
     assert.equal(disabled.lastCall.domain, 'switch');
+    await page.locator('[data-color="#ff0000"]').click();
+    await page.waitForFunction(() => !document.querySelector('trimlight-pattern-card')._busy);
+    await page.locator('[data-color="disabled"]').click();
+    await page.waitForFunction(() => !document.querySelector('trimlight-pattern-card')._busy);
+    assert.equal(await page.evaluate(() => document.querySelector('trimlight-pattern-card')._attributes().pixels[2].disable), true);
     assert.deepEqual(errors, []);
     console.log('PASS: native browser drag sends color service, updates destination color and preserves count; dragging X disables destination without changing color/count or browser errors');
   } finally { await browser.close(); }
