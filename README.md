@@ -244,8 +244,8 @@ The UI numbers entries 1-30; their underlying API indexes are 0-29.
 
 To install the matching card (HACS or manual integration installation):
 
-1. Download/update Trimlight to **0.2.0-beta.11** or newer and restart Home Assistant.
-2. Add `/trimlight/trimlight-pattern-card.js?v=0.2.0-beta.11` under **Settings >
+1. Download/update Trimlight to **0.2.0-beta.12** or newer and restart Home Assistant.
+2. Add `/trimlight/trimlight-pattern-card.js?v=0.2.0-beta.12` under **Settings >
    Dashboards > Resources** as a **JavaScript module**. If the Resources menu is
    hidden, enable Advanced Mode in your user profile. Remove the previous
    `/local/trimlight-pattern-card.js` resource if you installed it manually; use
@@ -594,3 +594,8 @@ The repository includes Trimlight EDGE API reference material in [`docs`](docs).
 
 MIT License. See [`LICENSE`](LICENSE).
 
+
+New pattern drafts start with all 30 slot colors black. The pattern dropdown combines
+reported and cached saved custom patterns; selecting one loads its colors, counts,
+mode, brightness and speed into the draft without running the lights. Built-in
+animations have no editable pixel-slot definition and remain in the Built-in Preset selector.

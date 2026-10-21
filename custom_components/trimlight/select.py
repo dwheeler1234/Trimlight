@@ -210,9 +210,27 @@ class PatternSourceSelect(PatternEditorEntity, SelectEntity):
         self._attr_unique_id = f"{entry_id}_pattern_source"
 
     def _choices(self) -> dict[str, dict]:
-        presets = (self.coordinator.data or {}).get("custom_effects") or self._data.custom_cache
-        return {f"{p.get('name') or 'Unnamed'} (id {p['id']})": p for p in presets
-                if isinstance(p.get("id"), int) and p["id"] >= 0}
+        state = self.coordinator.data or {}
+        saved = {}
+        # A partial live list must not hide other locally cached saved patterns.
+        # Prefer current definitions, retaining cached pixels if a summary omits them.
+        for presets in (self._data.custom_cache, state.get("custom_effects") or [], state.get("effects") or []):
+            for preset in presets:
+                if not isinstance(preset, dict):
+                    continue
+                effect_id = preset.get("id")
+                if not isinstance(effect_id, int) or isinstance(effect_id, bool) or not 0 <= effect_id <= 59:
+                    continue
+                if preset.get("category") not in (1, 2) and not (preset.get("category") is None and preset.get("pixels")):
+                    continue
+                merged = {**saved.get(effect_id, {}), **preset}
+                if not preset.get("pixels") and saved.get(effect_id, {}).get("pixels"):
+                    merged["pixels"] = saved[effect_id]["pixels"]
+                if merged.get("category") is None:
+                    merged["category"] = 2
+                saved[effect_id] = merged
+        return {f"{p.get('name') or 'Unnamed'} (id {effect_id})": p
+                for effect_id, p in sorted(saved.items())}
 
     @property
     def options(self) -> list[str]:

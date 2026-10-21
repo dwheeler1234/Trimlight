@@ -12,7 +12,7 @@ def bounded_int(value, low: int, high: int, label: str) -> int:
 
 
 def blank_pixels() -> list[dict]:
-    return [{"index": i, "count": 1 if i == 0 else 0, "color": 0xFFFFFF, "disable": False} for i in range(30)]
+    return [{"index": i, "count": 1 if i == 0 else 0, "color": 0, "disable": False} for i in range(30)]
 
 
 @dataclass
