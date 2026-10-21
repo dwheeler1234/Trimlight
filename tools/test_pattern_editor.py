@@ -41,7 +41,7 @@ class PatternTests(unittest.TestCase):
         payload = a.effect()
         payload["pixels"][0]["color"] = 123
         a.pixels[0]["count"] = 7
-        self.assertEqual(a.pixels[0]["color"], 0xFFFFFF)
+        self.assertTrue(all(p["color"] == 0 for p in a.pixels))
         self.assertEqual(b.pixels[0]["count"], 1)
 
     def test_invalid_fields_rejected(self):
@@ -206,6 +206,26 @@ class PatternTests(unittest.TestCase):
         api.preview_effect.assert_not_awaited()
         await entity.async_select_option("New Pattern")
         self.assertIsNone(entity.draft.source_id)
+
+    async def test_source_lists_cached_and_live_patterns_and_populates_slots(self):
+        entity, runtime, api = make_editor(select.PatternSourceSelect)
+        runtime.custom_cache = [{"id": 3, "name": "Cached", "category": 2,
+                                 "pixels": [{"index": 4, "count": 6, "color": 0x112233}]}]
+        entity.coordinator.data = {"custom_effects": [{"id": 7, "name": "Live", "category": 1,
+            "pixels": [{"index": 1, "count": 9, "color": 0xff0000}]}],
+            "effects": [{"id": 8, "name": "Pixel Pattern", "pixels": [{"index": 2, "count": 0, "color": 255}]},
+                        {"id": 10, "category": 0, "name": "Builtin"}]}
+        self.assertEqual(len(entity.options), 4)
+        await entity.async_select_option("Cached (id 3)")
+        self.assertEqual(entity.draft.pixels[4]["color"], 0x112233)
+        self.assertEqual(entity.draft.pixels[4]["count"], 6)
+        await entity.async_select_option("Live (id 7)")
+        self.assertEqual(entity.draft.pixels[1]["count"], 9)
+        self.assertEqual(entity.draft.pixels[4]["count"], 0)
+        await entity.async_select_option("Pixel Pattern (id 8)")
+        self.assertEqual(entity.draft.pixels[2]["color"], 255)
+        self.assertEqual(entity.draft.pixels[2]["count"], 0)
+        api.preview_effect.assert_not_awaited()
 
     async def test_missing_source_does_not_discard_draft(self):
         entity, _, _ = make_editor(select.PatternSourceSelect)
