@@ -60,6 +60,8 @@ const { chromium } = require('playwright');
     const empty = await page.evaluate(() => document.querySelector('trimlight-pattern-card')._attributes().pixels[8]);
     assert.equal(empty.color, 0x00ff00);
     assert.equal(empty.count, 0);
+    assert.equal(await page.locator('[data-entry="8"]').evaluate(el => el.style.getPropertyValue('--bulb')), '#00ff00');
+    assert.equal(await page.locator('[data-entry="8"]').textContent(), '0');
     assert.deepEqual(errors, []);
     console.log('PASS: native browser drag sends color service, updates destination color and preserves count; dragging X disables destination without changing color/count or browser errors');
   } finally { await browser.close(); }
