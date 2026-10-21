@@ -36,7 +36,7 @@ class PatternDraft:
         self.name = name.strip()
 
     def set_number(self, key: str, value) -> None:
-        limits = {"selected_index": (0, 29), "count": (0, 60), "speed": (0, 255), "brightness": (0, 255), "mode": (0, 16)}
+        limits = {"selected_index": (0, 29), "count": (0, 99), "speed": (0, 255), "brightness": (0, 255), "mode": (0, 16)}
         if key not in limits:
             raise ValueError("Unknown pattern field")
         value = bounded_int(value, *limits[key], key)
@@ -74,7 +74,7 @@ class PatternDraft:
             if index in used:
                 raise ValueError("Pattern entry indexes must be unique")
             used.add(index)
-            count = bounded_int(pixel.get("count"), 0, 60, "Pixel count")
+            count = bounded_int(pixel.get("count"), 0, 99, "Pixel count")
             color = bounded_int(pixel.get("color"), 0, 0xFFFFFF, "Color")
             disabled = pixel.get("disable", False)
             if not isinstance(disabled, bool):
