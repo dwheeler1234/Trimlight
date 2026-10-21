@@ -237,15 +237,15 @@ Drag any fixed or custom palette color onto a pattern circle to apply it directl
 Color drops preserve all light counts, including zero. Zero-count slots display their stored color. Drag the X disable control onto a slot to disable it while preserving its color
 and light count. Clicking X still disables the selected slot. Native drag-and-drop requires browser support; selecting a
 slot and clicking a palette color remains available on touch devices.
-Click a pattern circle to select it and open its light-count dialog (0-60).
+Click a pattern circle to select it and open its light-count dialog (0-99).
 Drag palette colors or X directly onto slots without opening the dialog. Changing
 a populated slot's color preserves its count.
 The UI numbers entries 1-30; their underlying API indexes are 0-29.
 
 To install the matching card (HACS or manual integration installation):
 
-1. Download/update Trimlight to **0.2.0-beta.12** or newer and restart Home Assistant.
-2. Add `/trimlight/trimlight-pattern-card.js?v=0.2.0-beta.12` under **Settings >
+1. Download/update Trimlight to **0.2.0-beta.13** or newer and restart Home Assistant.
+2. Add `/trimlight/trimlight-pattern-card.js?v=0.2.0-beta.13` under **Settings >
    Dashboards > Resources** as a **JavaScript module**. If the Resources menu is
    hidden, enable Advanced Mode in your user profile. Remove the previous
    `/local/trimlight-pattern-card.js` resource if you installed it manually; use
@@ -281,7 +281,7 @@ selected entry. The pattern dropdown loads a saved definition locally and never
 starts it on the lights.
 
 Click a position circle to select it and open a themed pixel-count dialog. Enter
-a whole number from 0 to 60 and press **Save**, or cancel/Escape to keep its count.
+a whole number from 0 to 99 and press **Save**, or cancel/Escape to keep its count.
 The dialog preserves typed input during incoming state updates. Palette choices
 still apply to the selected position after closing the dialog.
 
@@ -305,7 +305,7 @@ which needs no JavaScript resource.
 1. Press **New Pattern**, or select a saved custom preset with the existing
    custom-preset selector, wait for selection to finish, and press **Load Current Pattern**.
 2. Enter a name and choose the draft animation mode, speed and brightness.
-3. Choose **Pattern Entry** (0-29). Set **Pixel Count** (0-60), choose its RGB
+3. Choose **Pattern Entry** (0-29). Set **Pixel Count** (0-99), choose its RGB
    color, and toggle **Entry Disabled**. Repeat for the other entries.
 4. Press **Preview Pattern** to turn on the controller in manual mode and run
    the draft without saving it.
@@ -599,3 +599,8 @@ New pattern drafts start with all 30 slot colors black. The pattern dropdown com
 reported and cached saved custom patterns; selecting one loads its colors, counts,
 mode, brightness and speed into the draft without running the lights. Built-in
 animations have no editable pixel-slot definition and remain in the Built-in Preset selector.
+
+Pattern count compatibility: the editor accepts 0-99 per slot, matching the
+reported Trimlight app limit, and preserves saved counts above the PDF's
+outdated 60 limit. A reported Security pattern uses 76, 49 and 56. The app's
+600-light port setting is a separate controller configuration.
