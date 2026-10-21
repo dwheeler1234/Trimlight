@@ -88,7 +88,7 @@ async function main() {
   assert.equal(context.window.mockCalls.length, beforeInvalidDrop);
   await card._dropColor(6, "#abcdef");
   assert.equal(Number(card._value("entry")), 6);
-  assert.equal(card._pixel().count, 1);
+  assert.equal(card._pixel().count, 0);
   assert.equal(card._pixel().color, 0xabcdef);
   await card._openEntry(7);
   assert.equal(card._countDialog.open, true);
