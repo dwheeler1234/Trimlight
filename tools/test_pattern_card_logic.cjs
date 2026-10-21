@@ -62,6 +62,14 @@ async function main() {
   assert.throws(() => card._setCustomColor(16, "#112233"), /Invalid/);
   card._paletteExpanded = true; card._render();
   assert.equal(card.shadowRoot.innerHTML.includes("data-count"), false);
+  await card._selectEntry(7);
+  assert.equal(Number(card._value("entry")), 7);
+  assert.equal(card._countDialog == null, true);
+  await card._setNumber("count", 5);
+  await card._applyColor("#00ff00");
+  assert.equal(card._pixel().count, 5);
+  assert.equal(card._countDialog == null, true);
+  assert.equal((card.shadowRoot.innerHTML.match(/data-edit-entry="/g) || []).length, 30);
   await card._openEntry(7);
   assert.equal(card._countDialog.open, true);
   assert.match(card._countDialog.innerHTML, /Position 8/);
