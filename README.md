@@ -233,6 +233,10 @@ layout: a circular color palette, six-column pattern grid with counts inside the
 circles, an expandable 30-entry view, a pattern dropdown, animation mode, and
 brightness/speed sliders. Backgrounds, panels, text, borders, and accents inherit
 the active Home Assistant theme. Circle fills show the actual RGB pattern colors.
+Drag any fixed or custom palette color onto a pattern circle to apply it directly.
+Existing light counts are preserved; empty slots start with one light. The X disable
+control is click-only. Native drag-and-drop requires browser support; selecting a
+slot and clicking a palette color remains available on touch devices.
 Click a pattern circle to select it for palette color changes without opening a dialog.
 Use the pencil button on that circle to edit its light count (0-60). Changing
 a populated slot's color preserves its count.
@@ -240,8 +244,8 @@ The UI numbers entries 1-30; their underlying API indexes are 0-29.
 
 To install the matching card (HACS or manual integration installation):
 
-1. Download/update Trimlight to **0.2.0-beta.3** or newer and restart Home Assistant.
-2. Add `/trimlight/trimlight-pattern-card.js?v=0.2.0-beta.3` under **Settings >
+1. Download/update Trimlight to **0.2.0-beta.4** or newer and restart Home Assistant.
+2. Add `/trimlight/trimlight-pattern-card.js?v=0.2.0-beta.4` under **Settings >
    Dashboards > Resources** as a **JavaScript module**. If the Resources menu is
    hidden, enable Advanced Mode in your user profile. Remove the previous
    `/local/trimlight-pattern-card.js` resource if you installed it manually; use
