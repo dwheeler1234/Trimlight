@@ -279,13 +279,13 @@ class TrimlightPatternCard extends HTMLElement {
     root.querySelectorAll("[data-entry]").forEach((el) => {
       el.onclick = () => this._selectEntry(el.dataset.entry);
       el.ondragover = (event) => {
-        if (!this._dragColor || locked) return;
+        if (!this._dragColor || this._busy || el.disabled) return;
         event.preventDefault(); event.dataTransfer.dropEffect = "copy";
         el.classList.add("drop-target");
       };
       el.ondragleave = () => el.classList.remove("drop-target");
       el.ondrop = (event) => {
-        if (locked) return;
+        if (this._busy || el.disabled) return;
         const color = event.dataTransfer.getData("application/x-trimlight-color") || this._dragColor;
         if (!/^#[0-9a-f]{6}$/i.test(color || "")) return;
         event.preventDefault();
