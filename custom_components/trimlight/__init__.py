@@ -24,12 +24,14 @@ from .debug import async_log_event, get_debug_log_path
 from .storage import get_debug_cache_path, load_preset_cache, setup_preset_cache_listener
 from .services import register_services, register_action_set
 from .scheduling import SCHEDULE_FIELDS, SchedulingController
+from .frontend import async_setup_frontend
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 PLATFORMS: list[str] = ["light", "select", "button", "sensor", "number", "switch", "text", "binary_sensor"]
 
 
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:
+    await async_setup_frontend(hass)
     register_services(hass)
     register_action_set(hass, SCHEDULE_FIELDS, SchedulingController, {"get_schedules", "run_playlist"})
     return True
