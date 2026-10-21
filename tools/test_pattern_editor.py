@@ -44,9 +44,19 @@ class PatternTests(unittest.TestCase):
         self.assertTrue(all(p["color"] == 0 for p in a.pixels))
         self.assertEqual(b.pixels[0]["count"], 1)
 
+    def test_extended_saved_counts_round_trip(self):
+        draft = pattern.PatternDraft.from_effect({"id": 4, "name": "Security", "category": 2,
+            "pixels": [{"index": i, "count": count, "color": 0xffffff}
+                       for i, count in enumerate([76, 49, 56])]})
+        self.assertEqual([p["count"] for p in draft.effect()["pixels"][:3]], [76, 49, 56])
+        draft.set_number("count", 99)
+        self.assertEqual(draft.selected_pixel["count"], 99)
+        with self.assertRaises(ValueError):
+            draft.set_number("count", 100)
+
     def test_invalid_fields_rejected(self):
         draft = pattern.PatternDraft()
-        for key, value in [("selected_index", -1), ("selected_index", 30), ("count", 61),
+        for key, value in [("selected_index", -1), ("selected_index", 30), ("count", 100),
                            ("count", 0.5), ("speed", 256), ("brightness", -1), ("mode", 17),
                            ("count", True), ("speed", float("nan"))]:
             with self.subTest(key=key, value=value), self.assertRaises(ValueError):

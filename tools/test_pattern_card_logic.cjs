@@ -105,8 +105,8 @@ async function main() {
   card._countDialog.querySelector("[data-cancel]").onclick();
   assert.equal(card._pixel().count, 0);
   assert.equal(card._countDialog, null);
-  await card._saveEntryCount(8, 61);
-  assert.match(card._error, /0 to 60/);
+  await card._saveEntryCount(8, 100);
+  assert.match(card._error, /0 to 99/);
   assert.equal(card._pixel().count, 0);
   await card._setNumber("entry", 9);
   assert.equal(Number(card._value("entry")), 9);
