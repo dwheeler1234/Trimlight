@@ -79,11 +79,9 @@ For updates, use HACS **Update information** and **Redownload** if needed, then
 restart Home Assistant. Back up your existing integration before the first beta
 installation. No GitHub release has been published by these instructions.
 
-HACS installs the backend under `custom_components/trimlight`. The optional
-pattern card in the repository's top-level `www` folder is **not** copied by
-an integration download. Install/update that JavaScript file separately using
-the Custom Pattern Editor instructions below. Native editor entities work
-without the optional card.
+HACS installs both the backend and the bundled pattern-card JavaScript under
+`custom_components/trimlight`. No separate file copy is required. Add the dashboard
+resource and card using the Custom Pattern Editor instructions below.
 
 ### Manual Installation
 
@@ -237,17 +235,35 @@ brightness/speed sliders. Backgrounds, panels, text, borders, and accents inheri
 the active Home Assistant theme. Circle fills show the actual RGB pattern colors.
 The UI numbers entries 1-30; their underlying API indexes are 0-29.
 
-To install the matching card:
+To install the matching card (HACS or manual integration installation):
 
-1. Copy `www/trimlight-pattern-card.js` into your Home Assistant configuration
-   folder at `www/trimlight-pattern-card.js`.
-2. Add `/local/trimlight-pattern-card.js?v=4` under **Settings > Dashboards >
-   Resources** as a **JavaScript module**. If the Resources menu is hidden, enable
-   Advanced Mode in your user profile. Restart Home Assistant once if you just
-   created the `www` folder, then reload the browser.
-3. Paste [this card configuration](docs/trimlight-pattern-card.yaml) into a manual
-   dashboard card. Use its `entities` overrides for renamed entities or additional
-   controllers.
+1. Download/update Trimlight to **0.2.0-beta.2** or newer and restart Home Assistant.
+2. Add `/trimlight/trimlight-pattern-card.js?v=0.2.0-beta.2` under **Settings >
+   Dashboards > Resources** as a **JavaScript module**. If the Resources menu is
+   hidden, enable Advanced Mode in your user profile. Remove the previous
+   `/local/trimlight-pattern-card.js` resource if you installed it manually; use
+   only one resource for this card. Reload the browser after changing resources.
+3. Add a Manual dashboard card with:
+
+   ```yaml
+   type: custom:trimlight-pattern-card
+   title: Trimlight
+   ```
+
+Use [the full card configuration](docs/trimlight-pattern-card.yaml) for entity
+ID overrides if your controller entities have different names or suffixes.
+The card is listed as **Trimlight Pattern Editor** in the card picker once the
+resource loads; downloading an integration does not add a dashboard card for you.
+For dashboards with YAML-managed resources, add the same URL with `type: module`
+to your Lovelace resources configuration instead of using the Resources UI.
+
+The JavaScript is bundled in `custom_components/trimlight/frontend` and is served
+at the URL above during integration setup, before controller authentication.
+There is no file to copy into `/config/www`. Missing editor entities still require
+successful backend setup; check the Trimlight logs if the connection fails.
+If the browser shows “Custom element doesn't exist”, check that the resource URL
+opens JavaScript and then hard-refresh the browser. On future updates, change the
+resource's `v` query value to the installed integration version if it stays cached.
 
 The custom card requires the editor backend in this integration; installing the
 JavaScript file alone does not create the entities. It runs without external
