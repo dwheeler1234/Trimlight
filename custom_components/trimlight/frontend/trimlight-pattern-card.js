@@ -100,10 +100,14 @@ class TrimlightPatternCard extends HTMLElement {
 
   async _dropColor(index, color) {
     const target = Number(index);
-    if (!Number.isInteger(target) || target < 0 || target > 29 || !/^#[0-9a-f]{6}$/i.test(color)) return;
+    if (!Number.isInteger(target) || target < 0 || target > 29 || (color !== "disabled" && !/^#[0-9a-f]{6}$/i.test(color))) return;
     await this._perform(async () => {
       await this._setNumber("entry", target);
-      await this._applyColor(color);
+      if (color === "disabled") {
+        await this._call("disabled", "turn_on", {}, () => this._pixel().disable);
+      } else {
+        await this._applyColor(color);
+      }
     });
   }
 
@@ -208,7 +212,7 @@ class TrimlightPatternCard extends HTMLElement {
     const locked = this._busy || missing.length > 0;
     const disabled = locked ? "disabled" : "";
     const pixels = Array.from({length:30}, (_, i) => (attrs.pixels || []).find((p) => p.index === i) || {index:i, color:0, count:0, disable:false});
-    const fixedSwatch = ([label, color]) => `<button type="button" class="swatch ${color ? "" : "cross"}" data-color="${color || "disabled"}" draggable="${Boolean(color) && !locked}" style="--bulb:${color || "#000000"};--ink:${color ? ink(color) : "#ff4040"}" title="${label === "X" ? "Disable selected entry" : label}" aria-label="${label === "X" ? "Disable selected entry" : `Set entry color ${label}`}" ${disabled}>${label}</button>`;
+    const fixedSwatch = ([label, color]) => `<button type="button" class="swatch ${color ? "" : "cross"}" data-color="${color || "disabled"}" draggable="${!locked}" style="--bulb:${color || "#000000"};--ink:${color ? ink(color) : "#ff4040"}" title="${label === "X" ? "Disable selected entry" : label}" aria-label="${label === "X" ? "Disable selected entry" : `Set entry color ${label}`}" ${disabled}>${label}</button>`;
     const customSwatch = (slot) => {
       const color = this._customColors[slot];
       return `<div class="custom-cell"><button type="button" class="swatch" data-color="${color}" draggable="${!locked}" style="--bulb:${color};--ink:${ink(color)}" aria-label="Apply custom color ${slot + 1}" title="Custom color ${slot + 1}" ${disabled}></button><label class="custom-edit" title="Edit custom color ${slot + 1}">✎<input type="color" data-custom-slot="${slot}" aria-label="Edit custom color ${slot + 1}" value="${color}" ${disabled}></label></div>`;
@@ -253,7 +257,7 @@ class TrimlightPatternCard extends HTMLElement {
     </style><ha-card><div class="body">
       <div><div class="title">${esc(this._config.title || "Trimlight")} <ha-icon icon="mdi:palette-outline"></ha-icon></div><div class="subtitle">Custom pattern editor</div></div>
       ${missing.length ? `<p class="message error">Missing editor entities: ${esc(missing.map((key) => this._config.entities[key]).join(", "))}</p>` : ""}
-      <div class="panel palette">${swatches}${extras}<button class="expand palette-toggle" aria-label="${this._paletteExpanded ? "Hide fourth color row" : "Show fourth color row"}" aria-expanded="${this._paletteExpanded}">${this._paletteExpanded ? "⌃" : "⌄"}</button><p class="palette-note">Click a color for entry ${index + 1}, or drag it onto a pattern slot · ✎ edits custom colors</p></div>
+      <div class="panel palette">${swatches}${extras}<button class="expand palette-toggle" aria-label="${this._paletteExpanded ? "Hide fourth color row" : "Show fourth color row"}" aria-expanded="${this._paletteExpanded}">${this._paletteExpanded ? "⌃" : "⌄"}</button><p class="palette-note">Click a color for entry ${index + 1}, or drag a color or X onto a pattern slot · ✎ edits custom colors</p></div>
       <div class="panel"><label class="hint">Pattern name<select class="source" data-select="source" aria-label="Pattern name" ${disabled}>${optionList("source")}</select></label>
         <div class="grid">${pixels.slice(0, this._expanded ? 30 : 6).map((p) => {
           const color = p.count ? hex(p.color) : "#000000";
@@ -287,7 +291,7 @@ class TrimlightPatternCard extends HTMLElement {
       el.ondrop = (event) => {
         if (this._busy || el.disabled) return;
         const color = event.dataTransfer.getData("application/x-trimlight-color") || this._dragColor;
-        if (!/^#[0-9a-f]{6}$/i.test(color || "")) return;
+        if (color !== "disabled" && !/^#[0-9a-f]{6}$/i.test(color || "")) return;
         event.preventDefault();
         this._dragColor = null;
         el.classList.remove("drop-target");
