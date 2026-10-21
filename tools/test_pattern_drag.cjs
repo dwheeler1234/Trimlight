@@ -47,6 +47,13 @@ const { chromium } = require('playwright');
     await page.locator('[data-color="disabled"]').click();
     await page.waitForFunction(() => !document.querySelector('trimlight-pattern-card')._busy);
     assert.equal(await page.evaluate(() => document.querySelector('trimlight-pattern-card')._attributes().pixels[2].disable), true);
+    assert.equal(await page.locator('[data-edit-entry]').count(), 0);
+    await page.locator('[data-entry="1"]').click();
+    await page.locator('dialog').waitFor({state:'visible'});
+    await page.locator('dialog input').fill('9');
+    await page.locator('dialog button[type="submit"]').click();
+    await page.waitForFunction(() => !document.querySelector('trimlight-pattern-card')._busy);
+    assert.equal(await page.evaluate(() => document.querySelector('trimlight-pattern-card')._attributes().pixels[1].count), 9);
     assert.deepEqual(errors, []);
     console.log('PASS: native browser drag sends color service, updates destination color and preserves count; dragging X disables destination without changing color/count or browser errors');
   } finally { await browser.close(); }

@@ -245,7 +245,7 @@ class TrimlightPatternCard extends HTMLElement {
       .custom-cell{position:relative;width:100%;max-width:44px;aspect-ratio:1}.custom-cell .swatch{height:100%;max-width:none}.custom-edit{position:absolute;right:-3px;bottom:-3px;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:13px;background:var(--card-background-color);color:var(--primary-color);border:1px solid var(--divider-color);overflow:hidden}.custom-edit input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}.palette-toggle{grid-column:1/-1;margin:0!important}
       select,input[type=text],input[type=number]{background:var(--card-background-color);color:var(--primary-text-color);border:1px solid var(--divider-color);border-radius:8px;padding:10px;width:100%;min-width:0}
       .source{border:0;border-bottom:1px solid var(--divider-color);border-radius:0;margin-bottom:12px;background:transparent;padding:4px 0 12px;font-size:16px}
-      .grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px 10px;justify-items:center}.entry{font-size:14px;max-width:46px}.entry-cell{position:relative;width:100%;max-width:46px;aspect-ratio:1}.entry-cell .entry{height:100%}.entry-edit{position:absolute;right:-5px;bottom:-5px;width:22px;height:22px;border-radius:50%;padding:0;display:grid;place-items:center;font-size:14px;background:var(--card-background-color);color:var(--primary-color);border:1px solid var(--divider-color);cursor:pointer;z-index:1}.swatch[draggable="true"]{cursor:grab}.entry.drop-target{outline:3px dashed var(--primary-color);outline-offset:3px}.entry.selected{outline:3px solid var(--primary-color);outline-offset:3px}.entry.off::after{content:"";position:absolute;inset:5px;border-top:2px solid var(--primary-color);transform:translateY(50%) rotate(-45deg)}
+      .grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px 10px;justify-items:center}.entry{font-size:14px;max-width:46px}.entry-cell{position:relative;width:100%;max-width:46px;aspect-ratio:1}.entry-cell .entry{height:100%}.swatch[draggable="true"]{cursor:grab}.entry.drop-target{outline:3px dashed var(--primary-color);outline-offset:3px}.entry.selected{outline:3px solid var(--primary-color);outline-offset:3px}.entry.off::after{content:"";position:absolute;inset:5px;border-top:2px solid var(--primary-color);transform:translateY(50%) rotate(-45deg)}
       .expand{display:block;margin:10px auto -4px;background:none;border:0;color:var(--primary-color);width:44px;height:32px;font-size:24px}
       .edit-row{display:grid;grid-template-columns:1fr;gap:10px;align-items:end;margin-top:16px}.edit-row label{font-size:12px;color:var(--secondary-text-color)}.edit-row input{margin-top:5px}.disabled-toggle{display:flex;align-items:center;gap:8px;font-size:13px;margin-top:10px;color:var(--secondary-text-color)}input[type=checkbox]{accent-color:var(--primary-color);width:18px;height:18px}
       dialog{width:min(320px,calc(100vw - 32px));padding:22px;border:1px solid var(--divider-color);border-radius:16px;background:var(--ha-card-background,var(--card-background-color));color:var(--primary-text-color);font:inherit}dialog::backdrop{background:rgb(0 0 0 / .5)}dialog h3{margin:0 0 18px;font-size:20px}dialog label{display:grid;gap:8px}dialog .hint{margin:10px 0 20px}dialog .actions{justify-content:flex-end}
@@ -261,7 +261,7 @@ class TrimlightPatternCard extends HTMLElement {
       <div class="panel"><label class="hint">Pattern name<select class="source" data-select="source" aria-label="Pattern name" ${disabled}>${optionList("source")}</select></label>
         <div class="grid">${pixels.slice(0, this._expanded ? 30 : 6).map((p) => {
           const color = p.count ? hex(p.color) : "#000000";
-          return `<div class="entry-cell"><button type="button" class="entry ${p.index === index ? "selected" : ""} ${p.disable ? "off" : ""}" data-entry="${p.index}" style="--bulb:${color};--ink:${ink(color)}" aria-label="Entry ${p.index + 1}: ${p.count} pixels${p.disable ? ", disabled" : ""}" aria-pressed="${p.index === index}" ${disabled}>${Number(p.count) || 0}</button><button type="button" class="entry-edit" data-edit-entry="${p.index}" aria-label="Edit light count for position ${p.index + 1}" title="Edit light count for position ${p.index + 1}" ${disabled}>✎</button></div>`;
+          return `<div class="entry-cell"><button type="button" class="entry ${p.index === index ? "selected" : ""} ${p.disable ? "off" : ""}" data-entry="${p.index}" style="--bulb:${color};--ink:${ink(color)}" aria-label="Entry ${p.index + 1}: ${p.count} pixels${p.disable ? ", disabled" : ""}" aria-pressed="${p.index === index}" ${disabled}>${Number(p.count) || 0}</button></div>`;
         }).join("")}</div>
         <button class="expand" aria-label="${this._expanded ? "Collapse pattern" : "Show all 30 entries"}" aria-expanded="${this._expanded}">${this._expanded ? "⌃" : "⌄"}</button>
         <p class="hint">Tap a position to edit its pixel count.</p>
@@ -281,7 +281,7 @@ class TrimlightPatternCard extends HTMLElement {
     root.querySelector(".expand:not(.palette-toggle)").onclick = () => { this._expanded = !this._expanded; this._render(); };
     root.querySelector(".palette-toggle").onclick = () => { this._paletteExpanded = !this._paletteExpanded; this._render(); };
     root.querySelectorAll("[data-entry]").forEach((el) => {
-      el.onclick = () => this._selectEntry(el.dataset.entry);
+      el.onclick = () => this._openEntry(el.dataset.entry);
       el.ondragover = (event) => {
         if (!this._dragColor || this._busy || el.disabled) return;
         event.preventDefault(); event.dataTransfer.dropEffect = "copy";
@@ -298,7 +298,6 @@ class TrimlightPatternCard extends HTMLElement {
         this._dropColor(el.dataset.entry, color);
       };
     });
-    root.querySelectorAll("[data-edit-entry]").forEach((el) => { el.onclick = () => this._openEntry(el.dataset.editEntry); });
     root.querySelectorAll("[data-color]").forEach((el) => { el.onclick = () => { if (this._suppressPaletteClick) { this._suppressPaletteClick = false; return; } return this._perform(() => el.dataset.color === "disabled" ? this._call("disabled", "turn_on", {}, () => this._pixel().disable) : this._applyColor(el.dataset.color)); }; });
     const disableSwatch = root.querySelector('[data-color="disabled"]');
     if (disableSwatch) {
