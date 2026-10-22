@@ -9,13 +9,13 @@ class TrimlightControlCard extends HTMLElement {
     const entity=config.entity || 'light.trimlight';
     if(!/^light\.[a-z0-9_]+$/.test(entity))throw new Error('Choose a valid light entity');
     const prefix=entity.split('.')[1];
-    this._config={...config,entity,builtin:config.builtin_entity || `select.${prefix}_built_in_preset`,custom:config.pattern_entity || `select.${prefix}_custom_preset`,palette:config.palette_entity || `text.${prefix}_pattern_name`};
-    for(const key of ['builtin','custom','palette'])if(!/^[a-z_]+\.[a-z0-9_]+$/.test(this._config[key]))throw new Error('Use valid entity IDs');
+    this._config={...config,entity,builtin:config.builtin_entity || `select.${prefix}_built_in_preset`,custom:config.pattern_entity || `select.${prefix}_custom_preset`,palette:config.palette_entity || `text.${prefix}_pattern_name`,effect:config.effect_entity || `select.${prefix}_custom_effect_mode`,speed:config.speed_entity || `number.${prefix}_effect_speed`,length:config.length_entity || `number.${prefix}_effect_length`,reverse:config.reverse_entity || `switch.${prefix}_reverse_animation`};
+    for(const key of ['builtin','custom','palette','effect','speed','length','reverse'])if(!/^[a-z_]+\.[a-z0-9_]+$/.test(this._config[key]))throw new Error('Use valid entity IDs');
     this._storageKey=`trimlight-palette:${this._config.palette}`;this._colors=[...TL_CUSTOM];this._loadColors();this._render();
   }
   _loadColors(){try{const colors=JSON.parse(localStorage.getItem(this._storageKey));if(Array.isArray(colors)&&colors.length===16&&colors.every(c=>/^#[0-9a-f]{6}$/i.test(c)))this._colors=colors;}catch(_){} }
   set hass(hass){this._hass=hass;this._loadColors();if(!this._interacting)this._render();}
-  getCardSize(){return this._expanded?8:7;}
+  getCardSize(){return this._expanded?10:8;}
   static getStubConfig(){return {entity:'light.trimlight'};}
   _state(key){return this._hass?.states[this._config?.[key]];}
   async _call(domain,service,data){
@@ -40,6 +40,15 @@ class TrimlightControlCard extends HTMLElement {
       const state=this._state(key);if(!state||state.state==='unavailable')continue;
       options.push(`<optgroup label="${label}">${(state.attributes.options||[]).map((name,i)=>`<option value="${key}:${i}" ${state.state===name?'selected':''}>${tlEsc(name)}</option>`).join('')}</optgroup>`);
     }
+    const usable=key=>{const state=this._state(key);return !this._busy&&!offline&&state&&!['unknown','unavailable'].includes(state.state);};
+    const effect=this._state('effect');
+    const effectOptions=(effect?.attributes.options||[]).map((name,i)=>`<option value="${i}" ${effect.state===name?'selected':''}>${tlEsc(name)}</option>`).join('');
+    const numberControl=(key,label,fallbackMax)=>{
+      const state=this._state(key),attrs=state?.attributes||{};
+      const min=Number(attrs.min??(key==='length'?1:0)),max=Number(attrs.max??fallbackMax),step=Number(attrs.step??1);
+      const value=Number.isFinite(Number(state?.state))?Number(state.state):min;
+      return `<label class="brightness effect-range">${label}<input data-number="${key}" type="range" min="${min}" max="${max}" step="${step}" value="${value}" aria-label="${label}" ${usable(key)?'':'disabled'}><output>${usable(key)?value+(key==='speed'?'%':''):'—'}</output></label>`;
+    };
     this.shadowRoot.innerHTML=`<style>
       :host{display:block;color:var(--primary-text-color);font-family:Roboto,Arial,sans-serif}*{box-sizing:border-box}
       ha-card{display:block;padding:16px;background:var(--ha-card-background,var(--card-background-color));border-radius:var(--ha-card-border-radius,16px)}
@@ -51,7 +60,7 @@ class TrimlightControlCard extends HTMLElement {
       .swatch{display:grid;place-items:center;width:100%;max-width:44px;aspect-ratio:1;border:0;border-radius:50%;background:var(--bulb);color:var(--ink);font-size:12px;padding:0;user-select:none;-webkit-touch-callout:none}
       .cell{position:relative;width:100%;max-width:44px;aspect-ratio:1}.cell .swatch{height:100%}.edit{position:absolute;right:-3px;bottom:-3px;width:20px;height:20px;display:grid;place-items:center;border-radius:50%;background:var(--card-background-color);color:var(--primary-color);border:1px solid var(--divider-color);overflow:hidden}.edit input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
       .expand{grid-column:1/-1;background:transparent;color:var(--primary-color);border:0;min-height:30px;width:100%}.pattern{display:block;margin:16px 0}.pattern select{display:block;width:100%;margin-top:6px;padding:10px;border-radius:8px;border:1px solid var(--divider-color);background:var(--secondary-background-color);color:var(--primary-text-color)}
-      .error{color:var(--error-color);overflow-wrap:anywhere}button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--primary-color);outline-offset:2px}
+      .reverse{min-height:40px;min-width:64px;border-radius:20px;border:1px solid var(--divider-color);background:var(--secondary-background-color);color:var(--primary-text-color)}.reverse[aria-checked="true"]{background:var(--primary-color);color:var(--text-primary-color)}.effect-range{font-size:14px}.error{color:var(--error-color);overflow-wrap:anywhere}button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--primary-color);outline-offset:2px}
     </style><ha-card>
       <div class="header"><div><div class="title">${tlEsc(this._config.title||'Trimlight')}</div><div class="state">${offline?'Unavailable':unknown?'Power unknown / timer mode':on?'On':'Off'}</div></div><button class="power" data-power aria-label="${on?'Turn off':'Turn on'}" ${disabled}>⏻ ${on?'Off':'On'}</button></div>
       ${this._error?`<p class="error" role="alert">${tlEsc(this._error)}</p>`:''}
@@ -59,8 +68,13 @@ class TrimlightControlCard extends HTMLElement {
       <label class="pattern">Pattern<select data-pattern aria-label="Pattern" ${this._busy||offline||!options.length?'disabled':''}><option value="" ${!['custom','builtin'].some(k=>this._state(k)?.attributes.options?.includes(this._state(k)?.state))?'selected':''} disabled>Choose a pattern</option>${options.join('')}</select></label>
       ${!options.length?'<p class="hint">No pattern options available. Check the preset entity IDs.</p>':''}
       <label class="color">Color<input type="color" data-picker value="${currentColor}" aria-label="Color" ${disabled}></label>
-      <div class="palette">${TL_FIXED.map(([label,color])=>swatch(label,color)).join('')}${custom(0)}${custom(1)}${Array.from({length:this._expanded?14:7},(_,i)=>custom(i+2)).join('')}<button class="expand" aria-label="${this._expanded?'Hide fourth color row':'Show fourth color row'}" aria-expanded="${this._expanded}">${this._expanded?'⌃':'⌄'}</button></div>
+      <div class="palette">${TL_FIXED.slice(0,this._expanded?12:7).map(([label,color])=>swatch(label,color)).join('')}${this._expanded?Array.from({length:16},(_,i)=>custom(i)).join(''):''}<button class="expand" aria-label="${this._expanded?'Collapse color palette':'Expand full color palette'}" aria-expanded="${this._expanded}">${this._expanded?'⌃':'⌄'}</button></div>
 
+      <label class="pattern">Trimlight Effect<select data-effect aria-label="Trimlight Effect" ${this._busy||offline||!effect||effect.state==='unavailable'||!effectOptions?'disabled':''}><option value="" disabled ${effect?.attributes.options?.includes(effect?.state)?'':'selected'}>Choose an effect</option>${effectOptions}</select></label>
+      ${numberControl('speed','Effect Speed',100)}
+      ${numberControl('length','Effect Length',90)}
+      <div class="color"><span>Reverse Animation</span><button class="reverse" data-reverse role="switch" aria-checked="${this._state('reverse')?.state==='on'}" ${usable('reverse')?'':'disabled'}>${this._state('reverse')?.state==='on'?'On':'Off'}</button></div>
+      ${!usable('length')||!usable('reverse')?'<p class="hint">Length and reverse are available for an active built-in effect in Manual mode.</p>':''}
     </ha-card>`;
     const root=this.shadowRoot;
     root.querySelector('[data-power]').onclick=()=>this._call('light',on?'turn_off':'turn_on',{entity_id:this._config.entity});
@@ -69,6 +83,15 @@ class TrimlightControlCard extends HTMLElement {
     slider.oninput=()=>{this._interacting=true;root.querySelector('output').textContent=`${slider.value}%`;};
     slider.onchange=()=>{this._interacting=false;this._call('light','turn_on',{entity_id:this._config.entity,brightness_pct:Number(slider.value)});};
     slider.onpointerup=()=>{this._interacting=false;};slider.onpointercancel=()=>{this._interacting=false;this._render();};slider.onblur=()=>{this._interacting=false;};
+    root.querySelectorAll('[data-number]').forEach(input=>{
+      const key=input.dataset.number;
+      input.onpointerdown=()=>{this._interacting=true;};
+      input.oninput=()=>{this._interacting=true;input.nextElementSibling.textContent=input.value+(key==='speed'?'%':'');};
+      input.onchange=()=>{this._interacting=false;if(usable(key))this._call('number','set_value',{entity_id:this._config[key],value:Number(input.value)});};
+      input.onpointerup=()=>{this._interacting=false;};input.onpointercancel=()=>{this._interacting=false;this._render();};input.onblur=()=>{this._interacting=false;};
+    });
+    root.querySelector('[data-effect]').onchange=event=>{const option=this._state('effect')?.attributes.options?.[Number(event.target.value)];if(option!==undefined)this._call('select','select_option',{entity_id:this._config.effect,option});};
+    root.querySelector('[data-reverse]').onclick=()=>{if(usable('reverse'))this._call('switch',this._state('reverse').state==='on'?'turn_off':'turn_on',{entity_id:this._config.reverse});};
     root.querySelector('[data-picker]').onchange=e=>this._color(e.target.value);
     root.querySelectorAll('[data-color]').forEach(el=>{el.onclick=()=>el.dataset.color==='off'?this._call('light','turn_off',{entity_id:this._config.entity}):this._color(el.dataset.color);});
     root.querySelectorAll('[data-custom]').forEach(el=>{el.onchange=()=>{const color=el.value;if(!/^#[0-9a-f]{6}$/i.test(color))return;this._colors[Number(el.dataset.custom)]=color;try{localStorage.setItem(this._storageKey,JSON.stringify(this._colors));}catch(_){}this._color(color);};});
