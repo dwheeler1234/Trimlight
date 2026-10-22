@@ -170,3 +170,10 @@ Schedule writes also need vendor time-format confirmation. Port bounds need comp
 | ID | Feature | Implementation | Validation | Evidence / next check |
 | --- | --- | --- | --- | --- |
 | TL-093 | Trimlight update status entity (HACS) | Implemented | Verified | User confirmed the Trimlight update indicator (`update.trimlight_update`) works on 2026-10-22. This tracks integration updates, not controller firmware installation; tracking issue #17. |
+
+## Control card expansion
+
+| ID | Feature | Implementation | Validation | Evidence / next check |
+| --- | --- | --- | --- | --- |
+| TL-094 | Control card one-row palette expands to all four rows | Implemented | Retest needed | beta.16; Edge verifies 7 collapsed/28 expanded slots. Earlier control-card features remain verified under TL-092. |
+| TL-095 | Control card Effect dropdown, Effect Speed/Length sliders and Reverse Animation toggle | Implemented | Retest needed | beta.16; simulated Edge verifies entity inference, select/number/switch calls and unavailable controls. Needs physical-controller/iPhone acceptance; underlying native feature IDs TL-016–TL-019. |
