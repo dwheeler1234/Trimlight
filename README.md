@@ -649,7 +649,7 @@ and built-in presets. Optional overrides: `effect_entity`, `speed_entity`,
 Update to **0.2.0-beta.18** through HACS, restart Home Assistant, and add this
 additional **JavaScript module** resource (keep your other Trimlight resources):
 
-`/trimlight/trimlight-timer-card.js?v=0.2.0-beta.18`
+`/trimlight/trimlight-timer-card.js?v=0.2.0-beta.19`
 
 ```yaml
 type: custom:trimlight-timer-card
@@ -658,3 +658,22 @@ entity: sensor.not_assigned_trimlight_daily_schedules
 ```
 
 [Timer editor instructions and time-format notes](docs/timer-editor.md).
+
+To show the timers as separate cards, add two Manual cards using the timer
+resource above. Use `timer: 1` on the first and `timer: 2` on the second:
+
+```yaml
+type: custom:trimlight-timer-card
+entity: sensor.not_assigned_trimlight_daily_schedules
+timer: 1
+```
+
+```yaml
+type: custom:trimlight-timer-card
+entity: sensor.not_assigned_trimlight_daily_schedules
+timer: 2
+```
+
+Each card displays and saves only its assigned timer. Omitting `timer` retains
+the original two-form layout for existing dashboards. Both timers share the
+controller's operating mode.
