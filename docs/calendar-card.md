@@ -109,3 +109,26 @@ The user's iPhone-created event reports October 22, start 00:00 and off 21:01,
 confirming zero-valued calendar time fields are present in controller data. No
 automatic time offset was added. Calendar reads are confirmed working by the user;
 new-event creation remains awaiting live verification.
+
+## API-style save action field (beta.28)
+
+`trimlight.save_calendar_schedule` now accepts `id` in action YAML. It maps to
+`payload.id` in the outgoing API request. The legacy `schedule_id` field remains
+accepted for existing cards/automations; supply exactly one of the two names.
+This naming change does not change the API payload or resolve the outstanding
+accepted-but-not-persisted calendar save issue.
+
+```yaml
+action: trimlight.save_calendar_schedule
+data:
+  config_entry_id: YOUR_TRIMLIGHT_ENTRY_ID
+  id: 0
+  effect_id: 1
+  start_date: {month: 12, day: 31}
+  end_date: {month: 1, day: 1}
+  start_time: {hours: 10, minutes: 1}
+  end_time: {hours: 11, minutes: 1}
+```
+
+This field alias applies only to save_calendar_schedule. Other schedule actions
+retain their current fields. Restart HA after updating; resources need no change.

@@ -27,7 +27,7 @@ class Schema:
         return value
 
 
-f.module("voluptuous", Schema=Schema, Required=lambda key, **kwargs:key,
+f.module("voluptuous", Schema=Schema, Invalid=ValueError, All=lambda normalize, schema: lambda value: schema(normalize(value)), Required=lambda key, **kwargs:key,
          Optional=lambda key, **kwargs:key, In=lambda choices:choices)
 
 
@@ -124,6 +124,37 @@ class DiscoveryTests(unittest.TestCase):
         self.assertFalse(records["list_devices"][2])
         with self.assertRaises(ValueError):
             config["schema"]({"config_entry_id":"entry", "name":"Roof", "device_id":"other"})
+
+    async def test_calendar_save_id_alias_preserves_api_payload(self):
+        scheduling = importlib.import_module("trimlight_feature_test.scheduling")
+        _, runtime, runtime_api, _ = m.runtime()
+        runtime_api.save_calendar_schedule = AsyncMock(return_value={"code":0,"payload":{"id":0}})
+        records = {}
+        registry = SimpleNamespace(records=records, async_register=lambda domain, action, handler, **kwargs: records.update({action:(handler, kwargs, False)}))
+        hass = SimpleNamespace(services=registry, data={"trimlight":{"entry":runtime}})
+        services.register_action_set(hass, scheduling.SCHEDULE_FIELDS, scheduling.SchedulingController, {"get_schedules"})
+        handler, config, admin = records["save_calendar_schedule"]
+        self.assertTrue(admin)
+        base = {"config_entry_id":"entry", "effect_id":7,
+                "start_date":{"month":12,"day":31}, "end_date":{"month":1,"day":1},
+                "start_time":{"hours":10,"minutes":1}, "end_time":{"hours":11,"minutes":1}}
+        for field in ("id", "schedule_id"):
+            original = dict(base, **{field:0})
+            params = config["schema"](original)
+            result = await handler(SimpleNamespace(data=params, return_response=True))
+            self.assertEqual(result["payload"]["id"], 0)
+            self.assertEqual(runtime_api.save_calendar_schedule.await_args.args[0], {
+                "id":0,"effectId":7,"startDate":{"month":12,"day":31},"endDate":{"month":1,"day":1},
+                "startTime":{"hours":10,"minutes":1},"endTime":{"hours":11,"minutes":1}})
+            self.assertIn(field, original)
+        for invalid in (dict(base), dict(base,id=0,schedule_id=0), dict(base,id="0"), dict(base,id=0,extra=True)):
+            with self.assertRaises(ValueError):
+                config["schema"](invalid)
+        for invalid_id in (-1,60,True):
+            params = config["schema"](dict(base,id=invalid_id))
+            with self.assertRaises(f.HomeAssistantError):
+                await handler(SimpleNamespace(data=params, return_response=True))
+        self.assertEqual(runtime_api.save_calendar_schedule.await_count, 2)
 
     async def test_actual_api_clock_uses_injected_timezone(self):
         class ClientResponseError(Exception):

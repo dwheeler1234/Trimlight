@@ -319,7 +319,7 @@ save_calendar_schedule:
       selector:
         config_entry:
           integration: trimlight
-    schedule_id:
+    id:
       required: true
       selector:
         number:
