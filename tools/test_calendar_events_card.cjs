@@ -1,0 +1,16 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');const {chromium}=require('playwright');
+(async()=>{const browser=await chromium.launch({channel:'msedge',headless:true});try{
+const page=await browser.newPage({viewport:{width:390,height:850}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
+await page.setContent('<style>html{--primary-text-color:#eee;--secondary-text-color:#bbb;--card-background-color:#303441;--secondary-background-color:#20232a;--divider-color:#555;--primary-color:#a87be0}body{background:#171b22;margin:12px}</style><trimlight-calendar-events-card></trimlight-calendar-events-card>');
+await page.addScriptTag({content:fs.readFileSync(path.join(__dirname,'../www/trimlight-calendar-card.js'),'utf8')});
+await page.evaluate(()=>{const card=document.querySelector('trimlight-calendar-events-card');card.setConfig({entity:'sensor.test_calendar'});window.state={state:'0',attributes:{schedules:[],presets:[{id:9,name:'CHRISTMAS <script>'}]}};window.calls=[];window.publish=()=>card.hass={states:{'sensor.test_calendar':window.state},callService:async(...args)=>{window.calls.push(args);if(window.fail)throw Error('Read failed');}};window.publish()});
+assert.match(await page.locator('[data-empty]').textContent(),/No saved/);
+await page.evaluate(()=>{window.state.attributes.schedules=[{id:4,effectId:200,startDate:{month:12,day:20},endDate:{month:1,day:2},startTime:{hours:0,minutes:0},endTime:{hours:22,minutes:30}},{id:0,effectId:9,startDate:{month:10,day:22},endDate:{month:10,day:22},startTime:{hours:16,minutes:15},endTime:{hours:16,minutes:20}},{id:5,effectId:12,startDate:{},endDate:{}}];window.publish()});
+const rows=page.locator('li');assert.equal(await rows.count(),3);assert.match(await rows.nth(0).textContent(),/CHRISTMAS <script>.*Slot 1.*October 22.*16:15.*16:20/s);assert.equal(await rows.locator('script').count(),0);assert.match(await rows.nth(1).textContent(),/Combined-effect playlist.*crosses New Year.*00:00.*22:30/s);assert.match(await rows.nth(2).textContent(),/Pattern id 12.*Unknown date.*Unknown time/s);
+await page.getByRole('button',{name:'Refresh',exact:true}).click();assert.deepEqual(await page.evaluate(()=>window.calls),[['homeassistant','update_entity',{entity_id:'sensor.test_calendar'}]]);
+await page.evaluate(()=>window.fail=true);await page.getByRole('button',{name:'Refresh',exact:true}).click();assert.match(await page.getByRole('alert').textContent(),/Read failed/);
+await page.evaluate(()=>{window.state.state='unavailable';window.publish()});assert.match(await page.locator('ha-card').textContent(),/sensor unavailable/);assert.equal(await rows.count(),0);
+await page.evaluate(()=>{window.fail=false;window.state.state='3';window.publish()});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);assert.deepEqual(errors,[]);
+await page.screenshot({path:path.resolve(__dirname,'../../../outputs/trimlight-calendar-events-preview.png'),fullPage:true});
+console.log('PASS: empty/offline distinction, saved patterns, playlist, sorted slots, dates, midnight, year wrap, escaped names, unknown data, read-only refresh, errors, mobile layout');
+}finally{await browser.close()}})().catch(e=>{console.error(e);process.exitCode=1});
