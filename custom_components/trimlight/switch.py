@@ -35,9 +35,28 @@ class TrimlightDailyScheduleSwitch(TrimlightEntity, SwitchEntity):
 
     @property
     def is_on(self):
+        verifier = self._data.daily_verifier
+        pending = verifier.pending.get(self.slot) if verifier else None
+        if pending:
+            return pending["target"]
         daily = ((self.coordinator.data or {}).get("payload") or {}).get("daily") or []
         record = next((p for p in daily if p.get("id") == self.slot), None)
         return record.get("enable") if record else None
+
+    @property
+    def assumed_state(self):
+        verifier = self._data.daily_verifier
+        return bool(verifier and self.slot in verifier.pending)
+
+    @property
+    def extra_state_attributes(self):
+        verifier = self._data.daily_verifier
+        if verifier is None:
+            return {"verification_status": "reported"}
+        pending = verifier.pending.get(self.slot)
+        return {"verification_status": verifier.status.get(self.slot, "reported"),
+                "pending_enabled": pending["target"] if pending else None,
+                "reported_enabled": verifier.reported(self.slot)}
 
     async def async_turn_on(self, **kwargs):
         await SchedulingController(self._data).execute("enable_daily_schedule", {"schedule_id": self.slot, "enabled": True})
