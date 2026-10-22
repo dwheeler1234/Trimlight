@@ -50,16 +50,17 @@ class TrimlightControlCard extends HTMLElement {
       .palette{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;justify-items:center;background:var(--secondary-background-color);border-radius:12px;padding:12px;touch-action:none}
       .swatch{display:grid;place-items:center;width:100%;max-width:44px;aspect-ratio:1;border:0;border-radius:50%;background:var(--bulb);color:var(--ink);font-size:12px;padding:0;user-select:none;-webkit-touch-callout:none}
       .cell{position:relative;width:100%;max-width:44px;aspect-ratio:1}.cell .swatch{height:100%}.edit{position:absolute;right:-3px;bottom:-3px;width:20px;height:20px;display:grid;place-items:center;border-radius:50%;background:var(--card-background-color);color:var(--primary-color);border:1px solid var(--divider-color);overflow:hidden}.edit input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
-      .expand{grid-column:1/-1;background:transparent;color:var(--primary-color);border:0;min-height:30px;width:100%}.pattern{display:block;margin-top:16px}.pattern select{display:block;width:100%;margin-top:6px;padding:10px;border-radius:8px;border:1px solid var(--divider-color);background:var(--secondary-background-color);color:var(--primary-text-color)}
+      .expand{grid-column:1/-1;background:transparent;color:var(--primary-color);border:0;min-height:30px;width:100%}.pattern{display:block;margin:16px 0}.pattern select{display:block;width:100%;margin-top:6px;padding:10px;border-radius:8px;border:1px solid var(--divider-color);background:var(--secondary-background-color);color:var(--primary-text-color)}
       .error{color:var(--error-color);overflow-wrap:anywhere}button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--primary-color);outline-offset:2px}
     </style><ha-card>
       <div class="header"><div><div class="title">${tlEsc(this._config.title||'Trimlight')}</div><div class="state">${offline?'Unavailable':unknown?'Power unknown / timer mode':on?'On':'Off'}</div></div><button class="power" data-power aria-label="${on?'Turn off':'Turn on'}" ${disabled}>⏻ ${on?'Off':'On'}</button></div>
       ${this._error?`<p class="error" role="alert">${tlEsc(this._error)}</p>`:''}
       <label class="brightness">Brightness<input type="range" min="0" max="100" step="1" value="${brightness}" aria-label="Brightness" ${disabled}><output>${brightness}%</output></label>
-      <label class="color">Color<input type="color" data-picker value="${currentColor}" aria-label="Color" ${disabled}></label>
-      <div class="palette">${TL_FIXED.map(([label,color])=>swatch(label,color)).join('')}${custom(0)}${custom(1)}${Array.from({length:this._expanded?14:7},(_,i)=>custom(i+2)).join('')}<button class="expand" aria-label="${this._expanded?'Hide fourth color row':'Show fourth color row'}" aria-expanded="${this._expanded}">${this._expanded?'⌃':'⌄'}</button></div>
       <label class="pattern">Pattern<select data-pattern aria-label="Pattern" ${this._busy||offline||!options.length?'disabled':''}><option value="" ${!['custom','builtin'].some(k=>this._state(k)?.attributes.options?.includes(this._state(k)?.state))?'selected':''} disabled>Choose a pattern</option>${options.join('')}</select></label>
       ${!options.length?'<p class="hint">No pattern options available. Check the preset entity IDs.</p>':''}
+      <label class="color">Color<input type="color" data-picker value="${currentColor}" aria-label="Color" ${disabled}></label>
+      <div class="palette">${TL_FIXED.map(([label,color])=>swatch(label,color)).join('')}${custom(0)}${custom(1)}${Array.from({length:this._expanded?14:7},(_,i)=>custom(i+2)).join('')}<button class="expand" aria-label="${this._expanded?'Hide fourth color row':'Show fourth color row'}" aria-expanded="${this._expanded}">${this._expanded?'⌃':'⌄'}</button></div>
+
     </ha-card>`;
     const root=this.shadowRoot;
     root.querySelector('[data-power]').onclick=()=>this._call('light',on?'turn_off':'turn_on',{entity_id:this._config.entity});
