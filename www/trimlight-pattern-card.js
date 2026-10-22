@@ -237,6 +237,8 @@ class TrimlightPatternCard extends HTMLElement {
       .body{padding:16px;display:grid;gap:14px}.title{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:18px;font-weight:500}.subtitle{font-size:12px;color:var(--secondary-text-color);margin-top:4px}
       .panel{background:var(--secondary-background-color);border:1px solid var(--divider-color);border-radius:12px;padding:12px}
       .palette{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;align-items:center;justify-items:center}
+      .palette,.grid,input[type=range]{touch-action:none;overscroll-behavior:contain}
+      .swatch,.entry{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
       button,input,select{font:inherit}button{cursor:pointer}button:disabled,input:disabled,select:disabled{cursor:wait;opacity:.55}
       .swatch,.entry{border:0;border-radius:50%;aspect-ratio:1;width:100%;max-width:44px;display:grid;place-items:center;background:var(--bulb);color:var(--ink);font-size:12px;padding:0;position:relative}
       .cross{font-size:24px;touch-action:none;user-select:none;cursor:grab}.cross.dragging{cursor:grabbing;outline:2px solid var(--primary-color)}.swatch{box-shadow:inset 0 0 0 1px rgb(128 128 128 / .3)}button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--primary-color);outline-offset:3px}
