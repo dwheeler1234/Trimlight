@@ -649,7 +649,7 @@ and built-in presets. Optional overrides: `effect_entity`, `speed_entity`,
 Update to **0.2.0-beta.18** through HACS, restart Home Assistant, and add this
 additional **JavaScript module** resource (keep your other Trimlight resources):
 
-`/trimlight/trimlight-timer-card.js?v=0.2.0-beta.21`
+`/trimlight/trimlight-timer-card.js?v=0.2.0-beta.22`
 
 ```yaml
 type: custom:trimlight-timer-card
@@ -675,13 +675,11 @@ timer: 2
 ```
 
 Each card displays and saves only its assigned timer. Omitting `timer` retains
-the original two-form layout for existing dashboards. Both timers share the
-controller's operating mode.
+the original two-form layout for existing dashboards. Controller operating mode is managed separately through its native entity.
 
 In beta.21, timer cards no longer display an Enabled switch. Use the native
 Daily Schedule switches to enable/disable timers. Time/pattern/repetition edits
-still use Save and preserve the currently reported enabled state. Refresh controller requests current
-reported schedules; Use Timer mode remains a separate action.
+still use Save and preserve the currently reported enabled state. Operating mode and controller refresh controls are managed outside the timer cards.
 
 ## Daily schedule switch responsiveness
 
@@ -699,3 +697,7 @@ cancels the pending timer/task. Save of the same timer definition is blocked
 while its enable change is pending to avoid overwriting it with stale state.
 This cannot remove latency from the two necessary cloud requests; each retains
 the existing 10-second timeout. See the feature register for live-test status.
+
+In beta.22, timer cards omit the operating-mode display, Use Timer mode and
+Refresh controller buttons. Use the existing Operating Mode card separately.
+Timer cards retain repetition, pattern, start/off time, Save and Reload timer.
