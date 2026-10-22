@@ -62,6 +62,8 @@ class SchedulingController(ManagementController):
                     "playlist": payload.get("combinedEffect") or {}, "switch_state": payload.get("switchState")}
         if action in {"set_daily_schedule", "enable_daily_schedule"}:
             sid = bounded_int(data["schedule_id"], 0, 1, "Daily schedule ID")
+            if action == "set_daily_schedule" and self.runtime.daily_verifier and sid in self.runtime.daily_verifier.pending:
+                raise ValueError("Wait for this timer's enable-state verification before saving its definition")
             if not isinstance(data["enabled"], bool):
                 raise ValueError("Enabled must be true or false")
             payload = await self.detail()
@@ -82,7 +84,12 @@ class SchedulingController(ManagementController):
                 require_effect(payload, daily["effectId"])
             now = self.api._current_date_payload()
             daily["currentDate"] = {"month": now["month"], "day": now["day"]}
-            return await self.refresh(await self.checked(self.api.save_daily_schedule(daily)))
+            result = await self.checked(self.api.save_daily_schedule(daily))
+            if action == "enable_daily_schedule":
+                # Return after acceptance. Do not hold management_lock during readback.
+                self.runtime.daily_verifier.accept(sid, data["enabled"])
+                return dict(result, confirmation_pending=True)
+            return await self.refresh(result)
         if action == "save_calendar_schedule":
             calendar = {"id": bounded_int(data["schedule_id"], 0, 59, "Calendar slot"),
                         "effectId": schedule_effect(data["effect_id"]),
