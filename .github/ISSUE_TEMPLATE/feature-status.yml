@@ -1,0 +1,44 @@
+name: Feature status / test report
+description: Record a feature test, failure, or status update using its TL ID.
+title: "[TL-XXX] "
+body:
+  - type: input
+    id: feature
+    attributes:
+      label: Feature ID and name
+      description: See docs/feature-status.md. Use one feature per report where practical.
+      placeholder: TL-001 - HACS custom repository installation
+    validations:
+      required: true
+  - type: dropdown
+    id: status
+    attributes:
+      label: Proposed validation status
+      options:
+        - Not tested
+        - Automated
+        - Observed
+        - Verified
+        - Retest needed
+        - Failing
+        - Not applicable
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Versions and environment
+      description: Integration version, resource URL, HA version, controller firmware, phone/browser. Never include credentials or backup keys.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps, expected result, and actual result
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence and related PRs
+      description: Screenshots, redacted errors, test output and PR links. State whether tested on a physical controller or simulated.
