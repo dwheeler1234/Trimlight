@@ -9,8 +9,8 @@ and full transcript were not used as proof of API encoding.
 
 ## Install
 
-1. Redownload the integration through HACS and restart Home Assistant (beta.18 or newer).
-2. Add `/trimlight/trimlight-timer-card.js?v=0.2.0-beta.18` as a **JavaScript module**
+1. Redownload the integration through HACS and restart Home Assistant (beta.19 or newer).
+2. Add `/trimlight/trimlight-timer-card.js?v=0.2.0-beta.19` as a **JavaScript module**
    resource. Keep the pattern-editor and compact-control resources as separate entries.
 3. Add a Manual dashboard card:
 
@@ -69,3 +69,11 @@ Headless Edge tests use the reported schedules, independently save Timer 2,
 check midnight, repetition, playlist selection, dirty-form preservation, stale
 edit rejection, failed saves, explicit Timer-mode selection, offline behavior and
 phone-width layout. They send no commands to the user's controller.
+
+## Separate timer cards
+
+Use the same resource for both cards and add `timer: 1` or `timer: 2` to their
+YAML. Titles default to Trimlight Timer 1 / Trimlight Timer 2, and each instance
+edits and saves only that timer. You can position them independently on your
+dashboard. The Use Timer mode buttons both affect the same controller mode.
+An existing configuration without `timer` continues to show both forms.
