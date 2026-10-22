@@ -30,4 +30,9 @@ async def async_setup_frontend(hass: HomeAssistant) -> None:
             str(Path(__file__).parent / "frontend" / "trimlight-schedule-row.js"),
             False,
         ),
+        StaticPathConfig(
+            "/trimlight/trimlight-calendar-card.js",
+            str(Path(__file__).parent / "frontend" / "trimlight-calendar-card.js"),
+            False,
+        ),
     ])
