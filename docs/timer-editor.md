@@ -9,8 +9,8 @@ and full transcript were not used as proof of API encoding.
 
 ## Install
 
-1. Redownload the integration through HACS and restart Home Assistant (beta.20 or newer).
-2. Add `/trimlight/trimlight-timer-card.js?v=0.2.0-beta.20` as a **JavaScript module**
+1. Redownload the integration through HACS and restart Home Assistant (beta.21 or newer).
+2. Add `/trimlight/trimlight-timer-card.js?v=0.2.0-beta.21` as a **JavaScript module**
    resource. Keep the pattern-editor and compact-control resources as separate entries.
 3. Add a Manual dashboard card:
 
@@ -29,18 +29,16 @@ Schedule writes use the existing admin-only action, so the user must be an admin
 
 ## Use
 
-- Each timer has Enabled, Today only / Every day / Weekdays / Weekend, a saved
+- Each timer has Today only / Every day / Weekdays / Weekend, a saved
   pattern or configured combined-effect playlist, Start time, Off time and Save.
 - Only saved controller presets (IDs 0-59) and a configured playlist (ID 200)
   can be scheduled; unsaved pattern-editor drafts are not schedule definitions.
-- **Enabled applies immediately** to the saved controller timer using the same
-  enable action as the native Daily Schedule switch. It preserves the saved
-  pattern and times; other unsaved form edits are not included. Save a new timer
-  definition before enabling it. **Save Timer 1/2** applies pattern, repetition
-  and time edits, preserving the current reported enabled state. Errors retain
-  edited values; writes are not retried automatically.
+- Enabled controls are not displayed on timer cards. Use the existing native
+  Daily Schedule 1/2 switches on your schedules card to enable or disable timers.
+  Save applies pattern, repetition and time changes while preserving the current
+  controller-reported enabled state. New definitions start disabled.
 - **Refresh controller** requests a fresh read through the schedules sensor.
-  Enabled always displays reported state. Accepted writes whose state has not
+  Saved settings preserve the controller-reported enabled state. Accepted writes whose state has not
   returned yet are explicitly marked as awaiting readback, not confirmed success.
 - **Reload timer** discards that timer's unsaved edits and reloads the latest
   sensor data. It does not issue a new cloud read. Incoming HA updates preserve
