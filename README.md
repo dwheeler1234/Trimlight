@@ -610,3 +610,27 @@ outdated 60 limit. A reported Security pattern uses 76, 49 and 56. The app's
 On touch devices, palette/grid gestures and slider adjustments do not pan the
 dashboard. Scroll from outside these controls to move through the page. Native
 pattern and animation dropdowns retain their normal selection behavior.
+
+## Compact control card
+
+The separate **Trimlight Controls** card has power, horizontal brightness, an RGB
+picker, the design panel palette (including 16 custom colors), and one dropdown
+with saved and built-in pattern groups. It inherits the active theme. X turns the
+lights off. Choosing a color sends a temporary solid-color preview; choosing a
+pattern runs that pattern. Brightness and power use the configured light entity.
+
+Add `/trimlight/trimlight-control-card.js?v=0.2.0-beta.15` as a JavaScript module
+resource after updating through HACS and restarting Home Assistant. Add a Manual card:
+
+```yaml
+type: custom:trimlight-control-card
+title: Trimlight
+entity: light.not_assigned_trimlight
+```
+
+Preset IDs and the shared design-palette storage key are inferred from the light
+entity prefix. Optional `pattern_entity`, `builtin_entity`, and `palette_entity`
+overrides handle renamed entities. The palette shares custom colors with the design
+panel when `palette_entity` matches that panel's pattern-name text entity. Reload
+the page to pick up palette changes if the other panel did not trigger a state update.
+Timer/unknown power is shown explicitly; the power button offers On in that state.
