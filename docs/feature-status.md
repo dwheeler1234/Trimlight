@@ -126,7 +126,7 @@ Schedule writes also need vendor time-format confirmation. Port bounds need comp
 | TL-068 | Read daily/calendar/playlist configuration | Implemented | Observed | Sensors show two daily schedules, zero calendar schedules and two playlist entries. |
 | TL-069 | Create/update daily schedule | Implemented | Not tested | Two slots; vendor schedule-time interpretation unresolved. |
 | TL-070 | Enable/disable daily schedule switches/actions | Implemented | Retest needed | User reported slow daily switches. beta.22 removes blocking post-save refresh and adds bounded background confirmation/assumed-state attributes. 97 backend tests pass; actual cloud latency needs retest. |
-| TL-071 | Create/update annual calendar schedule | Implemented | Retest needed | beta.27 candidate creation fix omits ID so the server allocates it. Edits retain ID. User confirms calendar reads and iPhone-created zero-valued times; API creation still needs live retest. |
+| TL-071 | Create/update annual calendar schedule | Implemented | Failing | API returns success and IDs 0/1 but no event persists in app/readback. Reads and physical lighting writes work. beta.28 adds the requested id action-field alias; it does not alter API payloads or claim a persistence fix. |
 | TL-072 | Delete calendar schedule | Implemented | Not tested | trimlight.delete_calendar_schedule |
 | TL-073 | Configure combined-effect playlist | Implemented | Not tested | 1-5 saved effects and interval in minutes. |
 | TL-074 | Run combined-effect playlist | Implemented | Not tested | Manual mode, fixed ID 200. |
