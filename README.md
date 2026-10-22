@@ -9,6 +9,8 @@ This is a custom integration, not an official Home Assistant integration.
 
 ## Features
 
+Track implementation, live testing and remaining work in the [feature status register](docs/feature-status.md). Use the Feature status / test report issue form for updates.
+
 - [Controller schedules and playlists](docs/schedules-playlists.md): daily enable switches, calendar schedule CRUD, combined effects, configuration sensors and Home Assistant actions
 - [Controller/account management](docs/controller-management.md): discovery, operating mode, connectivity/firmware/clock diagnostics, preset CRUD, native groups, overlays, controller configuration and backup/restore actions
 - Custom pattern draft editor with 30 entries, RGB colors, pixel counts, disabled entries, animation mode, preview, and save-as-new
