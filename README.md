@@ -244,8 +244,8 @@ The UI numbers entries 1-30; their underlying API indexes are 0-29.
 
 To install the matching card (HACS or manual integration installation):
 
-1. Download/update Trimlight to **0.2.0-beta.13** or newer and restart Home Assistant.
-2. Add `/trimlight/trimlight-pattern-card.js?v=0.2.0-beta.13` under **Settings >
+1. Download/update Trimlight to **0.2.0-beta.14** or newer and restart Home Assistant.
+2. Add `/trimlight/trimlight-pattern-card.js?v=0.2.0-beta.14` under **Settings >
    Dashboards > Resources** as a **JavaScript module**. If the Resources menu is
    hidden, enable Advanced Mode in your user profile. Remove the previous
    `/local/trimlight-pattern-card.js` resource if you installed it manually; use
@@ -604,3 +604,7 @@ Pattern count compatibility: the editor accepts 0-99 per slot, matching the
 reported Trimlight app limit, and preserves saved counts above the PDF's
 outdated 60 limit. A reported Security pattern uses 76, 49 and 56. The app's
 600-light port setting is a separate controller configuration.
+
+On touch devices, palette/grid gestures and slider adjustments do not pan the
+dashboard. Scroll from outside these controls to move through the page. Native
+pattern and animation dropdowns retain their normal selection behavior.
