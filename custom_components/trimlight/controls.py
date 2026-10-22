@@ -6,11 +6,22 @@ from typing import Any
 from homeassistant.exceptions import HomeAssistantError
 
 
+def safe_error_description(value: object, sensitive_values=()) -> str:
+    """Keep a short, single-line server explanation without request credentials."""
+    if not isinstance(value, str):
+        return ""
+    for secret in sorted({str(v) for v in sensitive_values if v}, key=len, reverse=True):
+        value = value.replace(secret, "[redacted]")
+    return " ".join(value.split())[:240]
+
+
 def require_success(response: dict[str, Any]) -> None:
     """Reject API errors (which are returned with HTTP 200 as well)."""
     if not isinstance(response, dict) or response.get("code") != 0:
         code = response.get("code") if isinstance(response, dict) else None
-        raise HomeAssistantError(f"Trimlight rejected the request (code {code})")
+        description = safe_error_description(response.get("desc")) if isinstance(response, dict) else ""
+        suffix = f": {description}" if description else ""
+        raise HomeAssistantError(f"Trimlight rejected the request (code {code}){suffix}")
 
 
 def solid_rgb(effect: dict[str, Any]) -> tuple[int, int, int] | None:

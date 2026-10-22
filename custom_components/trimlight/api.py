@@ -10,6 +10,7 @@ from typing import Any
 from typing import Callable
 
 from .management_api import ManagementApi
+from .controls import safe_error_description
 
 import aiohttp
 import async_timeout
@@ -77,7 +78,14 @@ class TrimlightApi(ManagementApi):
                 json=payload,
             ) as resp:
                 resp.raise_for_status()
-                return await resp.json()
+                result = await resp.json()
+                if isinstance(result, dict) and result.get("code") != 0:
+                    # Redact before any caller can display the server's explanation.
+                    result["desc"] = safe_error_description(result.get("desc"), (
+                        self._creds.client_id, self._creds.client_secret,
+                        self._creds.device_id, *headers.values(),
+                    ))
+                return result
 
     async def get_devices(self, page: int = 0) -> dict[str, Any]:
         path = "/v1/oauth/resources/devices"

@@ -139,6 +139,35 @@ class DiscoveryTests(unittest.TestCase):
         instance = actual_api.TrimlightApi(None, actual_api.TrimlightCredentials("u", "s", "d"), clock=clock)
         self.assertEqual(instance._current_date_payload(), {"year":26, "month":10, "day":20, "weekday":3, "hours":12, "minutes":15, "seconds":1})
 
+    async def test_actual_api_redacts_error_description_without_changing_request(self):
+        f.module("aiohttp", ClientSession=object)
+        class Context:
+            def __init__(self, value=None):
+                self.value = value
+            async def __aenter__(self):
+                return self.value
+            async def __aexit__(self, *args):
+                return False
+        f.module("async_timeout", timeout=lambda seconds: Context())
+        path = Path(__file__).parents[1] / "custom_components/trimlight/api.py"
+        spec = importlib.util.spec_from_file_location("trimlight_feature_test.error_api", path)
+        actual = importlib.util.module_from_spec(spec)
+        sys.modules[spec.name] = actual
+        spec.loader.exec_module(actual)
+        response = SimpleNamespace(raise_for_status=Mock(), json=AsyncMock(return_value={
+            "code": 12006, "desc": "Denied client-id client-secret device-id signed-token\ntry again",
+        }))
+        session = SimpleNamespace(request=Mock(return_value=Context(response)))
+        api = actual.TrimlightApi(session, actual.TrimlightCredentials("client-id", "client-secret", "device-id"))
+        headers = {"authorization": "signed-token"}
+        api._headers = lambda: headers
+        result = await api._request("POST", "/example", payload={"deviceId": "device-id"})
+        self.assertEqual(result["desc"], "Denied [redacted] [redacted] [redacted] [redacted] try again")
+        session.request.assert_called_once_with("POST", "https://trimlight.ledhue.com/trimlight/example",
+                                               headers=headers, params=None, json={"deviceId": "device-id"})
+        response.json.return_value = {"code": 0, "desc": "client-id", "payload": {"value": 1}}
+        self.assertEqual(await api._request("GET", "/example"), response.json.return_value)
+
     async def test_scheduling_registration_uses_explicit_entry_and_admin_writes(self):
         scheduling = importlib.import_module("trimlight_feature_test.scheduling")
         _, runtime, _, _ = m.runtime()

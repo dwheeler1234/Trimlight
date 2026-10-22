@@ -98,6 +98,22 @@ def make_entity(cls=light.TrimlightLight, effect=None):
 
 
 class FeatureTests(unittest.TestCase):
+    def test_api_rejection_description(self):
+        with self.assertRaisesRegex(HomeAssistantError, "12006.*Access denied"):
+            controls.require_success({"code": 12006, "desc": "Access denied"})
+        for response in ({"code": 12006}, {"code": 12006, "desc": {}}, None):
+            with self.assertRaisesRegex(HomeAssistantError, "rejected the request"):
+                controls.require_success(response)
+        controls.require_success({"code": 0, "desc": "success"})
+
+    def test_error_description_redaction_and_bounds(self):
+        value = controls.safe_error_description("key=secret token=token\n denied", ["secret", "token"])
+        self.assertNotIn("secret", value)
+        self.assertNotIn("token", value)
+        self.assertNotIn("\n", value)
+        self.assertEqual(len(controls.safe_error_description("x" * 500)), 240)
+        self.assertEqual(controls.safe_error_description(None), "")
+
     async def test_rgb_replaces_effect_without_saving(self):
         entity, data, api = make_entity()
         await entity.async_turn_on(rgb_color=(255, 80, 0), brightness=123)
