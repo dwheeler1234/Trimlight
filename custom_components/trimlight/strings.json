@@ -388,10 +388,6 @@
           "name": "Trimlight entry",
           "description": "The loaded configuration entry for this controller."
         },
-        "schedule_id": {
-          "name": "Schedule id",
-          "description": "See the scheduling documentation for this field's format."
-        },
         "effect_id": {
           "name": "Effect id",
           "description": "See the scheduling documentation for this field's format."
@@ -411,6 +407,10 @@
         "end_time": {
           "name": "End time",
           "description": "Raw controller time: hours 0-24 and minutes 0-60 for compatibility. Ordinary clock inputs use 0-23 and 0-59; unchanged reported values are preserved."
+        },
+        "id": {
+          "name": "ID",
+          "description": "Calendar event ID (0-59), matching payload.id in the Trimlight API. Legacy schedule_id is also accepted; provide only one."
         }
       }
     },
