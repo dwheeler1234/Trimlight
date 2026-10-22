@@ -136,10 +136,10 @@ Schedule writes also need vendor time-format confirmation. Port bounds need comp
 
 | ID | Feature | Implementation | Validation | Evidence / next check |
 | --- | --- | --- | --- | --- |
-| TL-076 | Cloud connectivity sensor | Implemented | Observed | User reported on. |
-| TL-077 | Firmware sensor | Implemented | Observed | User reported 1.17.79. |
-| TL-078 | Controller state sensor | Implemented | Observed | User reported Normal. |
-| TL-079 | Controller clock sensor | Implemented | Observed | Wall-time value reported. |
+| TL-076 | Cloud connectivity sensor | Implemented | Verified | User confirmed Status card readings work on 2026-10-22; tracking issue #17. |
+| TL-077 | Firmware sensor | Implemented | Verified | User confirmed Status card readings work on 2026-10-22; tracking issue #17. |
+| TL-078 | Controller state sensor | Implemented | Verified | User confirmed Status card readings work on 2026-10-22; tracking issue #17. |
+| TL-079 | Controller clock sensor | Implemented | Verified | User confirmed Status card readings work on 2026-10-22; tracking issue #17. |
 | TL-080 | Redacted downloadable diagnostics | Implemented | Not tested | Allowlist; inspect actual download before sharing. |
 | TL-081 | Optional structured debug logging | Implemented | Not tested | Redact user logs before attaching issues. |
 | TL-082 | Explicit config-entry actions and admin restrictions | Implemented | Not tested | Service registration tested offline; real permissions require testing. |
