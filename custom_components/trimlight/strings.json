@@ -458,7 +458,7 @@
     },
     "create_calendar_schedule": {
       "name": "Create calendar schedule",
-      "description": "Create an annual event in an unoccupied slot; reject an existing controller event.",
+      "description": "Create an annual event with a controller-assigned ID. The provided slot is only a free-slot occupancy guard.",
       "fields": {
         "config_entry_id": {
           "name": "Trimlight entry",
@@ -466,7 +466,7 @@
         },
         "schedule_id": {
           "name": "Schedule id",
-          "description": "See the scheduling documentation for this field's format."
+          "description": "A currently free slot (0-59) used as an occupancy guard. Trimlight allocates the actual event ID."
         },
         "effect_id": {
           "name": "Effect id",
