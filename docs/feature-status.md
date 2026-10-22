@@ -126,7 +126,7 @@ Schedule writes also need vendor time-format confirmation. Port bounds need comp
 | TL-068 | Read daily/calendar/playlist configuration | Implemented | Observed | Sensors show two daily schedules, zero calendar schedules and two playlist entries. |
 | TL-069 | Create/update daily schedule | Implemented | Not tested | Two slots; vendor schedule-time interpretation unresolved. |
 | TL-070 | Enable/disable daily schedule switches/actions | Implemented | Retest needed | User reported slow daily switches. beta.22 removes blocking post-save refresh and adds bounded background confirmation/assumed-state attributes. 97 backend tests pass; actual cloud latency needs retest. |
-| TL-071 | Create/update annual calendar schedule | Implemented | Failing | User reports API accepted CHRISTMAS (id 9), October 22, 16:15–16:20 but readback stays 0/60 and event absent from app. Cause unresolved. |
+| TL-071 | Create/update annual calendar schedule | Implemented | Retest needed | beta.27 candidate creation fix omits ID so the server allocates it. Edits retain ID. User confirms calendar reads and iPhone-created zero-valued times; API creation still needs live retest. |
 | TL-072 | Delete calendar schedule | Implemented | Not tested | trimlight.delete_calendar_schedule |
 | TL-073 | Configure combined-effect playlist | Implemented | Not tested | 1-5 saved effects and interval in minutes. |
 | TL-074 | Run combined-effect playlist | Implemented | Not tested | Manual mode, fixed ID 200. |
@@ -203,11 +203,11 @@ User reports daily switches appear to work after loading beta.22. Progress displ
 
 | ID | Feature | Implementation | Validation | Evidence / next check |
 | --- | --- | --- | --- | --- |
-| TL-100 | Annual calendar card: saved-event selection, new free-slot creation, month/day ranges, saved pattern/playlist, start/off times, edit, confirmed deletion and readback feedback | Implemented | Failing | User reports accepted save remains pending with 0/60 events; event absent from app. Simulated tests pass but do not establish hardware save success. |
+| TL-100 | Annual calendar card: saved-event selection, new free-slot creation, month/day ranges, saved pattern/playlist, start/off times, edit, confirmed deletion and readback feedback | Implemented | Retest needed | beta.27 candidate fix omits ID for new API events and follows returned ID via service response, with unique new-event readback fallback. Earlier accepted saves were absent from controller/app. Live create still unverified. |
 | TL-101 | Calendar create-only action rejects occupied controller slots | Implemented | Retest needed | beta.24; fresh API occupancy check before create, existing save keeps upsert semantics. Offline tests pass; API does not provide atomic cross-client CAS. |
 
 ## Saved calendar events list
 
 | ID | Feature | Implementation | Validation | Evidence / next check |
 | --- | --- | --- | --- | --- |
-| TL-102 | Separate read-only calendar events card with pattern names, annual dates, start/off times and refresh | Implemented | Retest needed | beta.26; simulated Edge checks saved data, empty/offline states, escaped names, year wrap, midnight, refresh-only calls and mobile layout. Shares calendar resource. Does not resolve TL-071/TL-100 save failure. |
+| TL-102 | Separate read-only calendar events card with pattern names, annual dates, start/off times and refresh | Implemented | Retest needed | User confirms beta.26 list displays iPhone-created calendar events. Simulated Edge also checks empty/offline states, escaped names, year wrap, midnight and read-only refresh. Creation tracked separately under TL-071/TL-100. |
