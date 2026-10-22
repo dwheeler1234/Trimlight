@@ -233,7 +233,11 @@ class ScheduleTests(unittest.TestCase):
         self.assertEqual(yaml_actions, set(fields))
         self.assertEqual(set(descriptions), set(fields))
         for action, params in fields.items():
-            self.assertEqual(set(descriptions[action]["fields"]), {"config_entry_id", *params})
+            expected = {"config_entry_id", *params}
+            if action == "save_calendar_schedule":
+                expected.remove("schedule_id")
+                expected.add("id")
+            self.assertEqual(set(descriptions[action]["fields"]), expected)
 
 
 for name, method in list(vars(ScheduleTests).items()):
