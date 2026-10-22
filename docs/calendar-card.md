@@ -68,3 +68,26 @@ midnight, editing saved events, playlist selection, stale edits, delete cancel a
 confirmation, invalid dates, failed writes, delayed readback, full capacity,
 offline state and phone-width layout. Backend tests cover the create guard and
 zero-valued times. No real controller events were created, edited or deleted.
+
+## Saved events list
+
+Beta.26 adds a separate read-only card in the same calendar JavaScript resource.
+Update its existing URL to `/trimlight/trimlight-calendar-card.js?v=0.2.0-beta.26`;
+keep the other dashboard resources and the existing calendar editor.
+
+```yaml
+type: custom:trimlight-calendar-events-card
+title: Trimlight Calendar Events
+entity: sensor.not_assigned_trimlight_calendar_schedules
+```
+
+The list shows controller-reported patterns (or an ID fallback), month/day ranges,
+start/off times in 24-hour format, annual recurrence and ranges crossing New Year.
+Slots are displayed from 1 to 60. Refresh requests a sensor update; no schedule
+writes are sent. Missing/unavailable data is shown separately from an empty list.
+Pending editor drafts are not included. Use the same `time_encoding` override as
+the editor if the controller has been confirmed to need it.
+
+Live issue: the user's CHRISTMAS event (October 22, 16:15–16:20) was accepted by
+the API but absent from both controller readback and the app. Calendar writes
+remain failing/unconfirmed; this display card does not fix that save issue.
