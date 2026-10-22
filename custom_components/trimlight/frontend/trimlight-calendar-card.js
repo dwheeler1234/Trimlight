@@ -69,3 +69,27 @@ class TrimlightCalendarCard extends HTMLElement {
 }
 if(!customElements.get('trimlight-calendar-card'))customElements.define('trimlight-calendar-card',TrimlightCalendarCard);
 window.customCards=window.customCards||[];if(!window.customCards.some(card=>card.type==='trimlight-calendar-card'))window.customCards.push({type:'trimlight-calendar-card',name:'Trimlight Calendar',description:'Create, edit and delete annual controller calendar events'});
+/* Read-only list of controller-reported annual events. Shares the editor resource. */
+class TrimlightCalendarEventsCard extends HTMLElement {
+ constructor(){super();this.attachShadow({mode:'open'});this._busy=false;this._error='';}
+ setConfig(config){const entity=config.entity||'sensor.trimlight_calendar_schedules';if(!/^sensor\.[a-z0-9_]+$/.test(entity))throw Error('Configure the calendar schedules sensor');if(config.time_encoding&&!['clock','one_based'].includes(config.time_encoding))throw Error('time_encoding must be clock or one_based');this._config={...config,entity};this._render();}
+ set hass(value){this._hass=value;this._render();}
+ getCardSize(){return 3;}
+ static getStubConfig(){return {entity:'sensor.trimlight_calendar_schedules'};}
+ _date(value){const m=value?.month,d=value?.day;if(!Number.isInteger(m)||!Number.isInteger(d)||m<1||m>12||d<1||d>31)return 'Unknown date';return `${TC_MONTHS[m-1]} ${d}`;}
+ _time(value){const offset=this._config.time_encoding==='one_based'?1:0,h=Number(value?.hours)-offset,m=Number(value?.minutes)-offset;if(value?.hours==null||value?.minutes==null||!Number.isInteger(h)||!Number.isInteger(m)||h<0||h>23||m<0||m>59)return 'Unknown time';return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;}
+ async _refresh(){if(this._busy)return;this._busy=true;this._error='';this._render();try{await this._hass.callService('homeassistant','update_entity',{entity_id:this._config.entity});}catch(error){this._error=error.message||String(error);}finally{this._busy=false;this._render();}}
+ _render(){
+  if(!this._config||!this._hass)return;const sensor=this._hass.states[this._config.entity],offline=!sensor||['unknown','unavailable'].includes(sensor.state),attributes=sensor?.attributes||{};
+  const rows=(Array.isArray(attributes.schedules)?attributes.schedules:[]).filter(row=>row&&Number.isInteger(row.id)&&row.id>=0&&row.id<=59).slice().sort((a,b)=>a.id-b.id);
+  const presets=Array.isArray(attributes.presets)?attributes.presets:[];
+  const name=id=>presets.find(p=>p&&p.id===id)?.name||(id===200?'Combined-effect playlist':`Pattern id ${id??'unknown'}`);
+  const wrap=row=>Number(row.endDate?.month)*100+Number(row.endDate?.day)<Number(row.startDate?.month)*100+Number(row.startDate?.day);
+  this.shadowRoot.innerHTML=`<style>:host{display:block;color:var(--primary-text-color);font-family:Roboto,Arial,sans-serif}*{box-sizing:border-box}ha-card{display:block;padding:16px;background:var(--ha-card-background,var(--card-background-color));border-radius:var(--ha-card-border-radius,16px)}h2{font-size:18px;margin:0}header{display:flex;justify-content:space-between;align-items:center;gap:12px}button{font:inherit;min-height:42px;padding:8px 12px;border:1px solid var(--divider-color);border-radius:8px;background:var(--secondary-background-color);color:var(--primary-text-color);cursor:pointer}button:disabled{opacity:.5}button:focus-visible{outline:2px solid var(--primary-color)}ul{padding:0;margin:12px 0;list-style:none}li{padding:12px 0;border-bottom:1px solid var(--divider-color);overflow-wrap:anywhere}.pattern{font-weight:600}.slot,.hint{font-size:12px;color:var(--secondary-text-color);line-height:1.5}.details{margin-top:6px;line-height:1.6;font-size:14px}.error{color:var(--error-color);overflow-wrap:anywhere}</style><ha-card><header><h2>${tcEscape(this._config.title||'Trimlight Calendar Events')}</h2><button data-refresh ${this._busy||offline?'disabled':''}>${this._busy?'Refreshing…':'Refresh'}</button></header>
+  ${offline?'<p role="alert" class="error">Calendar sensor unavailable. Check the configured entity and integration.</p>':`<p class="hint">${rows.length}/60 saved annual events</p>${rows.length?`<ul>${rows.map(row=>`<li><div class="pattern">${tcEscape(name(row.effectId))}</div><div class="slot">Slot ${row.id+1}</div><div class="details">${tcEscape(this._date(row.startDate))} – ${tcEscape(this._date(row.endDate))}${wrap(row)?' · crosses New Year':''}<br>Start ${tcEscape(this._time(row.startTime))} · Off ${tcEscape(this._time(row.endTime))}</div></li>`).join('')}</ul>`:'<p data-empty>No saved calendar events reported by the controller.</p>'}<p class="hint">Repeats annually. Times use the controller clock.</p>`}
+  ${this._error?`<p role="alert" class="error">${tcEscape(this._error)}</p>`:''}</ha-card>`;
+  this.shadowRoot.querySelector('[data-refresh]').onclick=()=>this._refresh();
+ }
+}
+if(!customElements.get('trimlight-calendar-events-card'))customElements.define('trimlight-calendar-events-card',TrimlightCalendarEventsCard);
+if(!window.customCards.some(card=>card.type==='trimlight-calendar-events-card'))window.customCards.push({type:'trimlight-calendar-events-card',name:'Trimlight Calendar Events',description:'Saved annual events with patterns, dates and times'});
