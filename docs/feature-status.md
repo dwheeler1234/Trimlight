@@ -164,3 +164,9 @@ Schedule writes also need vendor time-format confirmation. Port bounds need comp
 | ID | Feature | Implementation | Validation | Evidence / next check |
 | --- | --- | --- | --- | --- |
 | TL-092 | Separate compact control card: power, horizontal brightness, RGB picker, shared palette and combined saved/built-in pattern dropdown | Implemented | Verified | User confirmed all compact control card features work on 2026-10-22: power, horizontal brightness, RGB picker/palette and saved/built-in pattern selection; tracking issue #17. |
+
+## Integration update status
+
+| ID | Feature | Implementation | Validation | Evidence / next check |
+| --- | --- | --- | --- | --- |
+| TL-093 | Trimlight update status entity (HACS) | Implemented | Verified | User confirmed the Trimlight update indicator (`update.trimlight_update`) works on 2026-10-22. This tracks integration updates, not controller firmware installation; tracking issue #17. |
