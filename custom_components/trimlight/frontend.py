@@ -14,5 +14,10 @@ async def async_setup_frontend(hass: HomeAssistant) -> None:
             CARD_URL,
             str(Path(__file__).parent / "frontend" / "trimlight-pattern-card.js"),
             False,
-        )
+        ),
+        StaticPathConfig(
+            "/trimlight/trimlight-control-card.js",
+            str(Path(__file__).parent / "frontend" / "trimlight-control-card.js"),
+            False,
+        ),
     ])

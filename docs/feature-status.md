@@ -158,3 +158,9 @@ Schedule writes also need vendor time-format confirmation. Port bounds need comp
 | TL-090 | Local LAN control | Backlog | Not applicable | Current transport is Trimlight cloud. |
 | TL-091 | Independent port/zone light entities | Backlog | Not applicable | Port configuration does not create independently addressable lights. |
 
+
+## Compact control card
+
+| ID | Feature | Implementation | Validation | Evidence / next check |
+| --- | --- | --- | --- | --- |
+| TL-092 | Separate compact control card: power, horizontal brightness, RGB picker, shared palette and combined saved/built-in pattern dropdown | Implemented | Retest needed | beta.15; simulated Edge tests cover service routing and states. Verify live controller and iPhone gestures. |
