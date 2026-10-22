@@ -9,6 +9,7 @@ const {chromium}=require('playwright');
   'select.not_assigned_trimlight_custom_preset':{state:'Security',attributes:{options:['Security','Game Day']}},
   'select.not_assigned_trimlight_built_in_preset':{state:'unknown',attributes:{options:['Rainbow','Wave']}}};
  window.publish=()=>{card.hass={states:window.states,callService:async(domain,service,data)=>{window.calls.push({domain,service,...data});if(window.fail)throw Error('Request failed');if(domain==='light'&&service==='turn_off')window.states[data.entity_id].state='off';if(domain==='select')window.states[data.entity_id].state=data.option;window.publish();}}};window.publish();});
+ assert.equal(await page.locator('[data-pattern]').evaluate(el => Boolean(el.closest('.pattern').compareDocumentPosition(el.getRootNode().querySelector('.color')) & Node.DOCUMENT_POSITION_FOLLOWING)),true);
  assert.equal(await page.locator('[data-color]').count(),21);
  await page.locator('.expand').click();assert.equal(await page.locator('[data-color]').count(),28);
  await page.locator('[data-power]').click();assert.equal((await page.evaluate(()=>window.calls.at(-1))).service,'turn_off');
