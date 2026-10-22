@@ -176,4 +176,4 @@ Schedule writes also need vendor time-format confirmation. Port bounds need comp
 | ID | Feature | Implementation | Validation | Evidence / next check |
 | --- | --- | --- | --- | --- |
 | TL-094 | Control card one-row palette expands to all four rows | Implemented | Retest needed | beta.16; Edge verifies 7 collapsed/28 expanded slots. Earlier control-card features remain verified under TL-092. |
-| TL-095 | Control card Effect dropdown, Effect Speed/Length sliders and Reverse Animation toggle | Implemented | Retest needed | beta.16; simulated Edge verifies entity inference, select/number/switch calls and unavailable controls. Needs physical-controller/iPhone acceptance; underlying native feature IDs TL-016–TL-019. |
+| TL-095 | Control card Effect dropdown, Effect Speed slider and Reverse Animation toggle | Implemented | Retest needed | beta.17 removes Length from this card. Simulated Edge verifies remaining controls and no Length slider. Needs physical-controller/iPhone acceptance; the native Length entity remains available separately (TL-018). |
