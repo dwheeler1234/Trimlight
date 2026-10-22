@@ -61,8 +61,7 @@ effect was deleted; enabling it requires a valid saved effect again.
 The reference's schedule-time table says **hours 1-24, minutes 1-60**, but
 actual daily definitions supplied by the user contain zero hours/minutes.
 Daily save/enable actions therefore accept raw hours 0-24 and minutes 0-60 for
-compatibility, sending the values unchanged. Calendar save retains the PDF's
-1-24/1-60 validation. No automatic offset is applied. The new
+compatibility, sending the values unchanged. Calendar save/create also accept raw 0-24/0-60 fields for clock compatibility as of beta.24. Calendar execution still needs live verification. No automatic offset is applied. The new
 [two-timer editor](timer-editor.md) uses normal clock inputs by default and
 preserves unchanged reported values. Physical execution, especially midnight
 and overnight schedules, still requires confirmation in the app/controller.
@@ -135,3 +134,7 @@ schedule saves are blocked for a slot whose enable verification is pending,
 preventing a stale definition from reverting the change. Other timer slots
 can still be edited, and repeated enable actions supersede older verification.
 Use Timer operating mode separately for enabled schedules to execute.
+
+The [calendar event editor card](calendar-card.md) provides annual create/edit/delete
+forms. Its create-only action rejects occupied slots; existing calendar save
+retains upsert behavior for API/automation compatibility.
