@@ -58,15 +58,14 @@ effect was deleted; enabling it requires a valid saved effect again.
 
 ### Important vendor time-format ambiguity
 
-The reference's schedule-time table explicitly gives **hours 1-24, minutes 1-60**,
-while its controller-clock table uses **hours 0-23, minutes 0-59**. It does not
-explain an offset or how those schedule values map to ordinary wall time. New
-schedule actions therefore accept the documented raw schedule objects, do not
-silently add/subtract one, and reject values outside the published schedule
-bounds. The example above sends the shown values verbatim; it is not a guarantee
-of an interpreted civil time. Confirm behavior in the Trimlight app/controller
-before enabling a new schedule. This is why the actions use object fields rather
-than a misleading Home Assistant time picker.
+The reference's schedule-time table says **hours 1-24, minutes 1-60**, but
+actual daily definitions supplied by the user contain zero hours/minutes.
+Daily save/enable actions therefore accept raw hours 0-24 and minutes 0-60 for
+compatibility, sending the values unchanged. Calendar save retains the PDF's
+1-24/1-60 validation. No automatic offset is applied. The new
+[two-timer editor](timer-editor.md) uses normal clock inputs by default and
+preserves unchanged reported values. Physical execution, especially midnight
+and overnight schedules, still requires confirmation in the app/controller.
 
 Enable/disable actions preserve existing controller-reported times, including
 zero fields, without reinterpreting them. The daily request's `currentDate` uses
