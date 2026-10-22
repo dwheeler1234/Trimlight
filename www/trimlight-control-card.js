@@ -72,9 +72,8 @@ class TrimlightControlCard extends HTMLElement {
 
       <label class="pattern">Trimlight Effect<select data-effect aria-label="Trimlight Effect" ${this._busy||offline||!effect||effect.state==='unavailable'||!effectOptions?'disabled':''}><option value="" disabled ${effect?.attributes.options?.includes(effect?.state)?'':'selected'}>Choose an effect</option>${effectOptions}</select></label>
       ${numberControl('speed','Effect Speed',100)}
-      ${numberControl('length','Effect Length',90)}
       <div class="color"><span>Reverse Animation</span><button class="reverse" data-reverse role="switch" aria-checked="${this._state('reverse')?.state==='on'}" ${usable('reverse')?'':'disabled'}>${this._state('reverse')?.state==='on'?'On':'Off'}</button></div>
-      ${!usable('length')||!usable('reverse')?'<p class="hint">Length and reverse are available for an active built-in effect in Manual mode.</p>':''}
+      ${!usable('reverse')?'<p class="hint">Reverse is available for an active built-in effect in Manual mode.</p>':''}
     </ha-card>`;
     const root=this.shadowRoot;
     root.querySelector('[data-power]').onclick=()=>this._call('light',on?'turn_off':'turn_on',{entity_id:this._config.entity});
