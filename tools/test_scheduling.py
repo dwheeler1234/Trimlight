@@ -24,6 +24,7 @@ def setup():
     api._current_date_payload = lambda:{"year":26,"month":10,"day":20}
     for name in ("save_daily_schedule", "save_calendar_schedule", "delete_calendar_schedule", "save_playlist", "run_effect"):
         setattr(api, name, AsyncMock(return_value={"code":0}))
+    runtime.daily_verifier = Mock(pending={}, status={})
     return entity, runtime, api, scheduling.SchedulingController(runtime)
 
 
@@ -84,6 +85,32 @@ class ScheduleTests(unittest.TestCase):
             await controller.execute("enable_daily_schedule", {"schedule_id":0,"enabled":True})
         await controller.execute("enable_daily_schedule", {"schedule_id":0,"enabled":False})
         api.save_daily_schedule.assert_awaited_once()
+
+    async def test_toggle_returns_after_acceptance_without_blocking_readback(self):
+        _, runtime, api, controller = setup()
+        result = await controller.execute("enable_daily_schedule", {"schedule_id":0,"enabled":False})
+        self.assertTrue(result["confirmation_pending"])
+        api.get_device_detail.assert_awaited_once()
+        api.save_daily_schedule.assert_awaited_once()
+        runtime.coordinator.async_request_refresh.assert_not_awaited()
+        runtime.daily_verifier.accept.assert_called_once_with(0, False)
+        self.assertFalse(runtime.management_lock.locked())
+
+    async def test_rejected_toggle_never_publishes_pending_state(self):
+        _, runtime, api, controller = setup()
+        api.save_daily_schedule.return_value = {"code":10001}
+        with self.assertRaises(f.HomeAssistantError):
+            await controller.execute("enable_daily_schedule", {"schedule_id":0,"enabled":False})
+        runtime.daily_verifier.accept.assert_not_called()
+
+    async def test_full_save_cannot_overwrite_pending_enable_state(self):
+        _, runtime, api, controller = setup()
+        runtime.daily_verifier.pending = {0: {"target": True}}
+        with self.assertRaisesRegex(f.HomeAssistantError, "enable-state verification"):
+            await controller.execute("set_daily_schedule", {"schedule_id":0,"enabled":False,"effect_id":7,
+                "repetition":"everyday","start_time":{"hours":19,"minutes":0},"end_time":{"hours":22,"minutes":30}})
+        api.get_device_detail.assert_not_awaited()
+        api.save_daily_schedule.assert_not_awaited()
 
     async def test_calendar_allows_year_wrap_and_playlist_id(self):
         _, _, api, controller = setup()

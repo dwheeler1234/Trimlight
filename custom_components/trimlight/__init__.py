@@ -20,6 +20,7 @@ from .const import (
 )
 from .coordinator import TrimlightCoordinator
 from .data import TrimlightData
+from .daily_verification import DailyScheduleVerification
 from .debug import async_log_event, get_debug_log_path
 from .storage import get_debug_cache_path, load_preset_cache, setup_preset_cache_listener
 from .services import register_services, register_action_set
@@ -66,6 +67,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = runtime
 
     await coordinator.async_config_entry_first_refresh()
+    runtime.daily_verifier = DailyScheduleVerification(hass, coordinator)
+    entry.async_on_unload(runtime.daily_verifier.close)
     if not runtime.builtins_refreshed:
         effects = (coordinator.data or {}).get("effects") or []
         builtins = build_builtin_presets_from_effects(effects)

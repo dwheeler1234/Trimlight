@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass, field
-from typing import cast
+from typing import Any, cast
 
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.storage import Store
@@ -63,6 +63,7 @@ class TrimlightData:
     pattern_lock: asyncio.Lock = field(default_factory=asyncio.Lock)
     management_lock: asyncio.Lock = field(default_factory=asyncio.Lock)
     backup_metadata: dict = field(default_factory=dict)
+    daily_verifier: Any = None
 
 
 def get_data(hass: HomeAssistant, entry_id: str) -> TrimlightData:

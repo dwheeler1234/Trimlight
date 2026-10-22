@@ -117,3 +117,21 @@ disable. Existing feature, pattern, management and discovery suites remain
 applicable. These are offline tests with mock HA interfaces/API responses.
 Controller compatibility, schedule-time interpretation, and full Home Assistant
 loading remain unverified; no physical device commands were sent during development.
+
+### Daily switch verification (beta.22)
+
+The native Daily Schedule switches and `enable_daily_schedule` action now
+complete after the preservation read and accepted write. They do not hold the
+management lock during verification. Both slots share bounded background
+readback, with 2/4/8-second delays and at most three verification reads. They
+never retry the schedule save automatically. The native switch exposes the
+accepted target as assumed state while `verification_status: pending`; this
+is API acceptance, not a physical-execution confirmation. A successful read
+clears pending to `confirmed`; exhausted stale/failed reads clear assumed state
+and report `not_confirmed` or `read_failed`. Normal polling is unchanged.
+
+Unsaved timer-card definitions do not inherit optimistic enable state. Full
+schedule saves are blocked for a slot whose enable verification is pending,
+preventing a stale definition from reverting the change. Other timer slots
+can still be edited, and repeated enable actions supersede older verification.
+Use Timer operating mode separately for enabled schedules to execute.
