@@ -15,7 +15,7 @@ class TrimlightCalendarCard extends HTMLElement {
  _clock(raw){if(!raw)return '';const offset=this._config.time_encoding==='one_based'?1:0;const h=Number(raw.hours)-offset,m=Number(raw.minutes)-offset;if(!Number.isInteger(h)||!Number.isInteger(m)||h<0||h>23||m<0||m>59)return '';return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;}
  _load(){const row=this._selection==='new'?null:this._row(this._selection);this._original=row?JSON.parse(JSON.stringify(row)):null;this._baseline=this._sig(row);this._draft=row?{effect:String(row.effectId),start_month:String(row.startDate?.month??''),start_day:String(row.startDate?.day??''),end_month:String(row.endDate?.month??''),end_day:String(row.endDate?.day??''),start:this._clock(row.startTime),end:this._clock(row.endTime)}:this._blank();this._dirty=false;this._armed=false;}
  _sync(){
-  if(this._awaiting){const actual=this._row(this._awaiting.id);if(this._awaiting.kind==='save'&&this._sig(actual)===this._awaiting.signature){this._awaiting=null;this._load();this._message='Event confirmed by controller readback.';}else if(this._awaiting.kind==='delete'&&!actual){this._awaiting=null;this._selection='new';this._load();this._message='Event deletion confirmed by controller readback.';}return;}
+  if(this._awaiting){if(this._awaiting.kind==='save'&&this._awaiting.beforeIds){const matches=this._rows().filter(row=>!this._awaiting.beforeIds.includes(row.id)&&this._sig(row)===this._awaiting.signature);if(matches.length===1){this._awaiting.id=matches[0].id;this._selection=String(matches[0].id);}}const actual=this._row(this._awaiting.id);if(this._awaiting.kind==='save'&&this._sig(actual)===this._awaiting.signature){this._awaiting=null;this._load();this._message='Event confirmed by controller readback.';}else if(this._awaiting.kind==='delete'&&!actual){this._awaiting=null;this._selection='new';this._load();this._message='Event deletion confirmed by controller readback.';}return;}
   if(!this._dirty)this._load();
  }
  async _resolve(){if(this._entryId||this._lookup||!this._hass?.callWS)return;this._lookup=true;try{const rows=await this._hass.callWS({type:'config/entity_registry/list'});const entry=rows.find(row=>row.entity_id===this._config.entity&&row.platform==='trimlight');if(!entry?.config_entry_id)throw Error();this._entryId=entry.config_entry_id;}catch(_){this._error='Cannot identify the controller. Set config_entry_id in the card configuration.';}this._render();}
@@ -30,8 +30,12 @@ class TrimlightCalendarCard extends HTMLElement {
    const event={effectId:effect,startDate:this._date(d.start_month,d.start_day),endDate:this._date(d.end_month,d.end_day),startTime:this._time(d.start,this._original?.startTime),endTime:this._time(d.end,this._original?.endTime)};
    this._busy=true;this._render();await this._hass.callService('homeassistant','update_entity',{entity_id:this._config.entity});this._checkReady();
    let id;if(this._selection==='new'){id=Array.from({length:60},(_,i)=>i).find(i=>!this._row(i));if(id===undefined)throw Error('All 60 calendar slots are occupied. Select an existing event to edit or delete.');}else{id=Number(this._selection);if(this._sig(this._row(id))!==this._baseline)throw Error('This event changed on the controller. Reload it before saving.');}
-   await this._hass.callService('trimlight',this._selection==='new'?'create_calendar_schedule':'save_calendar_schedule',{config_entry_id:this._entryId,schedule_id:id,effect_id:event.effectId,start_date:event.startDate,end_date:event.endDate,start_time:event.startTime,end_time:event.endTime});
-   this._selection=String(id);this._awaiting={kind:'save',id,signature:this._sig(event)};this._message='Save accepted. Awaiting controller readback; use Refresh before retrying.';this._sync();
+   const creating=this._selection==='new',beforeIds=this._rows().map(row=>row.id);
+   const reply=await this._hass.callWS({type:'call_service',domain:'trimlight',service:creating?'create_calendar_schedule':'save_calendar_schedule',return_response:true,service_data:{config_entry_id:this._entryId,schedule_id:id,effect_id:event.effectId,start_date:event.startDate,end_date:event.endDate,start_time:event.startTime,end_time:event.endTime}});
+   const assigned=reply?.response?.payload?.id;
+   const hasAssigned=Number.isInteger(assigned)&&assigned>=0&&assigned<=59;
+   if(creating&&hasAssigned)id=assigned;
+   this._selection=String(id);this._awaiting={kind:'save',id,signature:this._sig(event),...(creating&&!hasAssigned?{beforeIds}: {})};this._message='Save accepted. Awaiting controller readback; use Refresh before retrying.';this._sync();
   }catch(error){this._error=error.message||String(error);}finally{this._busy=false;this._render();}
  }
  async _delete(){

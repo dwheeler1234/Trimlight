@@ -101,6 +101,13 @@ class SchedulingController(ManagementController):
             if action == "create_calendar_schedule" and any(row.get("id") == calendar["id"] for row in payload.get("calendar") or []):
                 raise ValueError("This calendar slot is already occupied. Refresh and create the event again.")
             require_effect(payload, calendar["effectId"])
+            if action == "create_calendar_schedule":
+                occupied = {row.get("id") for row in payload.get("calendar") or []}
+                if len(occupied & set(range(60))) >= 60:
+                    raise ValueError("All calendar slots are occupied")
+                # Supplying an ID targets an existing definition. Omit it for
+                # creation and preserve the API's returned payload.id for HA.
+                calendar.pop("id")
             return await self.refresh(await self.checked(self.api.save_calendar_schedule(calendar)))
         if action == "delete_calendar_schedule":
             sid = bounded_int(data["schedule_id"], 0, 59, "Calendar slot")
