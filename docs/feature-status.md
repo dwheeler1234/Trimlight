@@ -55,7 +55,7 @@ Schedule writes also need vendor time-format confirmation. Port bounds need comp
 | TL-017 | Effect speed slider | Implemented | Not tested | Value observed; physical effect not confirmed. |
 | TL-018 | Built-in effect length | Implemented | Not tested | 1-90; requires suitable active built-in effect. |
 | TL-019 | Reverse animation | Implemented | Not tested | Requires suitable active built-in effect. |
-| TL-020 | Off/Manual/Timer mode selector | Implemented | Observed | Timer value reported; switching modes not verified. |
+| TL-020 | Off/Manual/Timer mode selector | Implemented | Verified | User confirmed all Operating Mode controls (Off, Manual, Timer) work on 2026-10-22; recorded in tracking issue #17. |
 | TL-021 | Current preset tracking and Timer unknown-power handling | Implemented | Observed | Timer state observed; transitions need testing. |
 
 ## Pattern editor
