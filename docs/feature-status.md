@@ -190,3 +190,11 @@ Schedule writes also need vendor time-format confirmation. Port bounds need comp
 | ID | Feature | Implementation | Validation | Evidence / next check |
 | --- | --- | --- | --- | --- |
 | TL-098 | Responsive Daily Schedule switches with accepted/pending state and bounded background readback | Implemented | Retest needed | beta.22; return after initial read/save, verify both slots with at most three reads, no automatic writes, handle superseded commands and unload. Offline tests pass; real HA latency/confirmation needs verification. |
+
+## Daily switch progress display
+
+| ID | Feature | Implementation | Validation | Evidence / next check |
+| --- | --- | --- | --- | --- |
+| TL-099 | Daily schedule custom entity row replaces pending on/off icons with a rotating progress indicator | Implemented | Retest needed | beta.23; simulated Edge verifies request/pending spinner, duplicate-click blocking, toggle restoration and errors. Requires custom rows/resource in the dashboard; backend unchanged. |
+
+User reports daily switches appear to work after loading beta.22. Progress display is tracked separately from backend verification; actual phone/dashboard acceptance remains outstanding.
