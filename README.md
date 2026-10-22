@@ -682,3 +682,20 @@ In beta.21, timer cards no longer display an Enabled switch. Use the native
 Daily Schedule switches to enable/disable timers. Time/pattern/repetition edits
 still use Save and preserve the currently reported enabled state. Refresh controller requests current
 reported schedules; Use Timer mode remains a separate action.
+
+## Daily schedule switch responsiveness
+
+In beta.22, Daily Schedule 1/2 switches return after the initial preservation
+read and accepted save rather than waiting for a third cloud request. The
+accepted target is shown as assumed state while background reads verify both
+slots together (at most three reads, with 2/4/8-second delays between attempts).
+Writes are never retried automatically. Normal ten-minute polling is unchanged.
+
+Entity attributes expose `verification_status` (`pending`, `confirmed`,
+`not_confirmed`, `read_failed`), `pending_enabled`, and `reported_enabled`.
+If readback never confirms the target, assumed state ends and the entity returns
+to its last reported state (or unavailable after a read failure). Unload/reload
+cancels the pending timer/task. Save of the same timer definition is blocked
+while its enable change is pending to avoid overwriting it with stale state.
+This cannot remove latency from the two necessary cloud requests; each retains
+the existing 10-second timeout. See the feature register for live-test status.
