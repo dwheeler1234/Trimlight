@@ -57,7 +57,14 @@ class TrimlightScheduleSensor(TrimlightEntity, SensorEntity):
         if self.field == "combinedEffect":
             value = payload.get(self.field) or {}
             return {"effect_ids": list(value.get("effectIds") or []), "interval_minutes": value.get("interval")}
-        return {"schedules": deepcopy(payload.get(self.field) or [])}
+        attributes = {"schedules": deepcopy(payload.get(self.field) or [])}
+        if self.field == "daily":
+            attributes["presets"] = [{"id": effect["id"], "name": effect.get("name") or "Unnamed"}
+                                     for effect in payload.get("effects") or []
+                                     if isinstance(effect, dict) and isinstance(effect.get("id"), int)
+                                     and not isinstance(effect["id"], bool) and 0 <= effect["id"] <= 59]
+            attributes["playlist_available"] = bool((payload.get("combinedEffect") or {}).get("effectIds"))
+        return attributes
 
 
 class TrimlightDetailSensor(TrimlightEntity, SensorEntity):
