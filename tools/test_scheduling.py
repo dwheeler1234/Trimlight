@@ -132,10 +132,13 @@ class ScheduleTests(unittest.TestCase):
 
     async def test_calendar_create_supports_midnight_and_new_year_wrap(self):
         _, _, api, controller = setup()
-        await controller.execute("create_calendar_schedule", {"schedule_id":1,"effect_id":7,
+        api.save_calendar_schedule.return_value = {"code":0,"payload":{"id":17}}
+        result = await controller.execute("create_calendar_schedule", {"schedule_id":1,"effect_id":7,
             "start_date":{"month":12,"day":31},"end_date":{"month":1,"day":2},
             "start_time":{"hours":19,"minutes":0},"end_time":{"hours":0,"minutes":0}})
         saved = api.save_calendar_schedule.await_args.args[0]
+        self.assertNotIn("id", saved)
+        self.assertEqual(result["payload"]["id"], 17)
         self.assertEqual(saved["startDate"], {"month":12,"day":31})
         self.assertEqual(saved["endTime"], {"hours":0,"minutes":0})
         api.set_switch_state.assert_not_awaited()
