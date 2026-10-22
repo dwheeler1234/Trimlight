@@ -25,10 +25,10 @@ class FrontendTests(unittest.TestCase):
             with self.assertRaises(StopIteration):
                 coro.send(None)
             configs = register.call_args.args[0]
-            self.assertEqual(len(configs), 3)
+            self.assertEqual(len(configs), 4)
             self.assertEqual({c.url_path for c in configs}, {
                 '/trimlight/trimlight-pattern-card.js', '/trimlight/trimlight-control-card.js',
-                '/trimlight/trimlight-timer-card.js'})
+                '/trimlight/trimlight-timer-card.js', '/trimlight/trimlight-schedule-row.js'})
             for registered in configs:
                 self.assertEqual(Path(registered.path).read_bytes(), (ROOT/'www'/Path(registered.path).name).read_bytes())
             config = configs[0]
