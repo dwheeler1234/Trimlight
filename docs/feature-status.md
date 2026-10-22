@@ -182,5 +182,5 @@ Schedule writes also need vendor time-format confirmation. Port bounds need comp
 
 | ID | Feature | Implementation | Validation | Evidence / next check |
 | --- | --- | --- | --- | --- |
-| TL-096 | Separate two-timer editor card: enable, repetition, saved pattern/playlist, start/off times, independent save/reload and explicit Timer-mode button | Implemented | Retest needed | beta.18. Reviewed tutorial daily-schedule UI. Simulated Edge tests use user's reported timer values; need real save/execution confirmation. |
+| TL-096 | Timer editor cards: individual Timer 1/2 or combined view, enable, repetition, saved pattern/playlist, start/off times, save/reload and explicit Timer mode | Implemented | Retest needed | beta.19 adds separate cards with timer: 1/2; Edge tests verify independent forms and target IDs. Need real save/execution confirmation. |
 | TL-097 | Daily timer midnight and whole-hour compatibility | Implemented | Retest needed | Accept and preserve zero-valued hours/minutes reported by the user's controller, without automatic offset. Calendar raw bounds unchanged. Backend payload tests pass. |
