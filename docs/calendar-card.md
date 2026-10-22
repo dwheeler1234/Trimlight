@@ -5,8 +5,8 @@ slots. It is a dashboard editor, not a Home Assistant Calendar entity.
 
 ## Setup
 
-1. Redownload Trimlight beta.24 or newer through HACS and restart Home Assistant.
-2. **Add** `/trimlight/trimlight-calendar-card.js?v=0.2.0-beta.24` as a JavaScript
+1. Redownload Trimlight beta.27 or newer through HACS and restart Home Assistant.
+2. **Add** `/trimlight/trimlight-calendar-card.js?v=0.2.0-beta.27` as a JavaScript
    module resource. Do not replace the existing timer/progress-row/control/editor resources.
 3. Add a Manual card:
 
@@ -22,9 +22,10 @@ that controller's entry ID. Calendar writes use administrator-only actions.
 
 ## Editing
 
-- New event selects the first free controller slot after a sensor refresh. The
-  new `trimlight.create_calendar_schedule` action also checks current API data
-  and rejects an occupied slot rather than replacing it.
+- New event finds a free slot as an occupancy guard after refreshing.
+  `trimlight.create_calendar_schedule` omits the ID in the outgoing create
+  request, letting Trimlight allocate it; the card follows the returned ID.
+  Existing-event edits still send the selected ID.
 - The event dropdown identifies saved events by month/day range, pattern and slot.
   Select one to load and edit it. Save changes that event's slot.
 - Library contains saved pattern IDs 0-59 and combined playlist ID 200 when
@@ -56,7 +57,10 @@ that controller's entry ID. Calendar writes use administrator-only actions.
 ## Backend actions
 
 `trimlight.create_calendar_schedule` uses the same fields as
-`trimlight.save_calendar_schedule` and refuses an occupied slot. The existing
+`trimlight.save_calendar_schedule`. Its `schedule_id` remains a free-slot
+occupancy guard for compatibility, not the allocated event ID. It is omitted
+from the API create payload. The response preserves the allocated `payload.id`.
+The existing
 save action keeps its upsert semantics for compatibility. Delete uses
 `trimlight.delete_calendar_schedule`. Each requires explicit `config_entry_id`.
 The calendar sensor now provides `presets` and `playlist_available` attributes.
@@ -91,3 +95,17 @@ the editor if the controller has been confirmed to need it.
 Live issue: the user's CHRISTMAS event (October 22, 16:15–16:20) was accepted by
 the API but absent from both controller readback and the app. Calendar writes
 remain failing/unconfirmed; this display card does not fix that save issue.
+
+## Calendar creation correction (beta.27)
+
+Earlier creation sent the proposed free ID, which may be interpreted as updating
+an existing event. Creation now omits it and uses Home Assistant service response
+data to track the server-assigned ID. If no ID is returned, confirmation requires
+a unique newly reported event matching the submitted fields; no write is retried.
+The API ID allocation behavior is inferred from another implementation and the
+vendor's returned-ID response; this fix still needs live acceptance.
+
+The user's iPhone-created event reports October 22, start 00:00 and off 21:01,
+confirming zero-valued calendar time fields are present in controller data. No
+automatic time offset was added. Calendar reads are confirmed working by the user;
+new-event creation remains awaiting live verification.
