@@ -9,8 +9,8 @@ and full transcript were not used as proof of API encoding.
 
 ## Install
 
-1. Redownload the integration through HACS and restart Home Assistant (beta.21 or newer).
-2. Add `/trimlight/trimlight-timer-card.js?v=0.2.0-beta.21` as a **JavaScript module**
+1. Redownload the integration through HACS and restart Home Assistant (beta.22 or newer).
+2. Add `/trimlight/trimlight-timer-card.js?v=0.2.0-beta.22` as a **JavaScript module**
    resource. Keep the pattern-editor and compact-control resources as separate entries.
 3. Add a Manual dashboard card:
 
@@ -20,11 +20,9 @@ title: Trimlight Timers
 entity: sensor.not_assigned_trimlight_daily_schedules
 ```
 
-The operating mode entity is inferred from the sensor prefix. For renamed
-sensors, provide `operating_mode_entity: select.YOUR_OPERATING_MODE`.
 The card resolves the sensor's Trimlight config entry through HA's entity registry.
 If your account cannot read it, provide `config_entry_id: YOUR_TRIMLIGHT_ENTRY_ID`
-explicitly. Use the same controller as the configured sensor and mode entity.
+explicitly. Use the same controller as the configured sensor.
 Schedule writes use the existing admin-only action, so the user must be an administrator.
 
 ## Use
@@ -37,14 +35,13 @@ Schedule writes use the existing admin-only action, so the user must be an admin
   Daily Schedule 1/2 switches on your schedules card to enable or disable timers.
   Save applies pattern, repetition and time changes while preserving the current
   controller-reported enabled state. New definitions start disabled.
-- **Refresh controller** requests a fresh read through the schedules sensor.
-  Saved settings preserve the controller-reported enabled state. Accepted writes whose state has not
-  returned yet are explicitly marked as awaiting readback, not confirmed success.
 - **Reload timer** discards that timer's unsaved edits and reloads the latest
   sensor data. It does not issue a new cloud read. Incoming HA updates preserve
   edited forms. A changed controller definition blocks saving until reloaded.
-- **Use Timer mode** is a separate explicit action. Saving never changes the
-  operating mode. Existing calendar schedules may also affect Timer-mode behavior.
+- Operating mode and refresh controls are not displayed on timer cards. Use
+  your separate Operating Mode card to select Timer mode for controller schedules.
+  Saving timer settings never changes mode. Existing calendar schedules can also
+  affect execution in Timer mode.
 - Times follow the controller's clock. These timers are stored on the controller;
   they are not Home Assistant automation triggers. Check correct execution in the
   Trimlight app after the first save, particularly across midnight.
@@ -80,5 +77,5 @@ phone-width layout. They send no commands to the user's controller.
 Use the same resource for both cards and add `timer: 1` or `timer: 2` to their
 YAML. Titles default to Trimlight Timer 1 / Trimlight Timer 2, and each instance
 edits and saves only that timer. You can position them independently on your
-dashboard. The Use Timer mode buttons both affect the same controller mode.
+dashboard. Controller mode is managed separately from these cards.
 An existing configuration without `timer` continues to show both forms.
