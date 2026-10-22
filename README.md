@@ -619,7 +619,7 @@ with saved and built-in pattern groups. It inherits the active theme. X turns th
 lights off. Choosing a color sends a temporary solid-color preview; choosing a
 pattern runs that pattern. Brightness and power use the configured light entity.
 
-Add `/trimlight/trimlight-control-card.js?v=0.2.0-beta.15` as a JavaScript module
+Add `/trimlight/trimlight-control-card.js?v=0.2.0-beta.16` as a JavaScript module
 resource after updating through HACS and restarting Home Assistant. Add a Manual card:
 
 ```yaml
@@ -634,3 +634,12 @@ overrides handle renamed entities. The palette shares custom colors with the des
 panel when `palette_entity` matches that panel's pattern-name text entity. Reload
 the page to pick up palette changes if the other panel did not trigger a state update.
 Timer/unknown power is shown explicitly; the power button offers On in that state.
+
+The controls palette starts with one row; its arrow expands all four rows. Below
+it, **Trimlight Effect** uses the Custom Effect Mode select, **Effect Speed** and
+**Effect Length** use the native number entities, and **Reverse Animation** is an
+on/off toggle. Length/reverse are disabled when the backend reports them
+unavailable (for example Timer mode or a custom effect). These are live controller
+controls, not draft-editor fields. The existing Pattern selector keeps both saved
+and built-in presets. Optional overrides: `effect_entity`, `speed_entity`,
+`length_entity`, `reverse_entity`; defaults use the configured light's prefix.
