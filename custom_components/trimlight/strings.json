@@ -354,11 +354,11 @@
         },
         "start_time": {
           "name": "Start time",
-          "description": "Raw vendor schedule time object: hours 1-24, minutes 1-60. Clock and schedule conventions differ; see documentation."
+          "description": "Raw controller time: hours 0-24 and minutes 0-60 for compatibility. Ordinary clock inputs use 0-23 and 0-59; unchanged reported values are preserved."
         },
         "end_time": {
           "name": "End time",
-          "description": "Raw vendor schedule time object: hours 1-24, minutes 1-60. Clock and schedule conventions differ; see documentation."
+          "description": "Raw controller time: hours 0-24 and minutes 0-60 for compatibility. Ordinary clock inputs use 0-23 and 0-59; unchanged reported values are preserved."
         }
       }
     },
@@ -406,11 +406,11 @@
         },
         "start_time": {
           "name": "Start time",
-          "description": "Raw vendor schedule time object: hours 1-24, minutes 1-60. Clock and schedule conventions differ; see documentation."
+          "description": "Raw controller time: hours 0-24 and minutes 0-60 for compatibility. Ordinary clock inputs use 0-23 and 0-59; unchanged reported values are preserved."
         },
         "end_time": {
           "name": "End time",
-          "description": "Raw vendor schedule time object: hours 1-24, minutes 1-60. Clock and schedule conventions differ; see documentation."
+          "description": "Raw controller time: hours 0-24 and minutes 0-60 for compatibility. Ordinary clock inputs use 0-23 and 0-59; unchanged reported values are preserved."
         }
       }
     },
@@ -453,6 +453,40 @@
         "config_entry_id": {
           "name": "Trimlight entry",
           "description": "The loaded configuration entry for this controller."
+        }
+      }
+    },
+    "create_calendar_schedule": {
+      "name": "Create calendar schedule",
+      "description": "Create an annual event in an unoccupied slot; reject an existing controller event.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Trimlight entry",
+          "description": "The loaded configuration entry for this controller."
+        },
+        "schedule_id": {
+          "name": "Schedule id",
+          "description": "See the scheduling documentation for this field's format."
+        },
+        "effect_id": {
+          "name": "Effect id",
+          "description": "See the scheduling documentation for this field's format."
+        },
+        "start_date": {
+          "name": "Start date",
+          "description": "Annual month/day object. Ranges may cross December to January."
+        },
+        "end_date": {
+          "name": "End date",
+          "description": "Annual month/day object. Ranges may cross December to January."
+        },
+        "start_time": {
+          "name": "Start time",
+          "description": "Raw controller time: hours 0-24 and minutes 0-60 for compatibility. Ordinary clock inputs use 0-23 and 0-59; unchanged reported values are preserved."
+        },
+        "end_time": {
+          "name": "End time",
+          "description": "Raw controller time: hours 0-24 and minutes 0-60 for compatibility. Ordinary clock inputs use 0-23 and 0-59; unchanged reported values are preserved."
         }
       }
     }
