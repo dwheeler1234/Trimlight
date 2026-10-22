@@ -732,3 +732,21 @@ It blocks duplicate clicks while pending and shows rejected/unconfirmed readback
 messages. Backend switch logic is unchanged. This is an Entities-card row, not a
 standalone card. Standard Home Assistant rows retain their built-in assumed-state
 [two-button display](https://www.home-assistant.io/integrations/homeassistant/).
+
+## Annual calendar event card
+
+Update through HACS to beta.24 or newer and restart Home Assistant. **Add** this
+additional JavaScript module resource; keep the timer, progress-row, pattern and
+control resource entries separately:
+
+`/trimlight/trimlight-calendar-card.js?v=0.2.0-beta.24`
+
+```yaml
+type: custom:trimlight-calendar-card
+title: Trimlight Calendar
+entity: sensor.not_assigned_trimlight_calendar_schedules
+```
+
+Select New event or an existing event, choose a saved pattern/playlist, month/day
+range and start/off times, then create or save. Delete requires confirmation.
+[Detailed calendar card instructions](docs/calendar-card.md).
