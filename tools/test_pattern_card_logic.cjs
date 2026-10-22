@@ -41,6 +41,7 @@ context.structuredClone = structuredClone;
 vm.runInContext(setup, context);
 
 async function main() {
+  assert.match(card.shadowRoot.innerHTML, /\.palette,\.grid,input\[type=range\]\{touch-action:none;overscroll-behavior:contain\}/);
   assert.equal((card.shadowRoot.innerHTML.match(/data-entry="/g) || []).length, 6);
   card._expanded = true; card._render();
   assert.equal((card.shadowRoot.innerHTML.match(/data-entry="/g) || []).length, 30);
