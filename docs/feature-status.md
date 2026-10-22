@@ -182,7 +182,7 @@ Schedule writes also need vendor time-format confirmation. Port bounds need comp
 
 | ID | Feature | Implementation | Validation | Evidence / next check |
 | --- | --- | --- | --- | --- |
-| TL-096 | Timer editor cards: individual Timer 1/2 or combined view, repetition, saved pattern/playlist, start/off times, save/reload and explicit Timer mode | Implemented | Retest needed | beta.21 removes Enabled controls at user request. Saves preserve existing enabled state; use native Daily Schedule switches separately. Simulated tests verify no enable control or enable action, and preservation of enabled/disabled states. Live execution retest needed. |
+| TL-096 | Timer editor cards: individual Timer 1/2 or combined view, repetition, saved pattern/playlist, start/off times and save/reload | Implemented | Retest needed | beta.22 omits Enabled, operating-mode display and mode/refresh buttons. Saves preserve enabled state. Simulated browser tests pass; live execution retest needed. |
 | TL-097 | Daily timer midnight and whole-hour compatibility | Implemented | Retest needed | Accept and preserve zero-valued hours/minutes reported by the user's controller, without automatic offset. Calendar raw bounds unchanged. Backend payload tests pass. |
 
 ## Daily switch response and verification
