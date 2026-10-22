@@ -32,6 +32,7 @@ const {chromium}=require('playwright');
  await page.evaluate(()=>window.fail=true);await first.locator('[data-field="start"]').fill('20:00');await first.locator('button[type=submit]').click();await page.waitForFunction(()=>!document.querySelector('trimlight-timer-card')._busy);assert.match(await page.locator('[role=alert]').textContent(),/Controller rejected/);assert.equal(await first.locator('[data-field="start"]').inputValue(),'20:00');
  await page.evaluate(()=>window.fail=false);
  assert.equal(await page.locator('[data-mode], [data-refresh], .mode').count(),0);
+ assert.equal(await page.locator('trimlight-timer-card').getByText('Save applies pattern', {exact:false}).count(),0);
  await first.locator('[data-reload]').click();
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
  await page.screenshot({path:path.resolve(__dirname,'../../../outputs/trimlight-timers-preview.png'),fullPage:true});
