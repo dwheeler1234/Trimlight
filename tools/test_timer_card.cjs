@@ -34,5 +34,16 @@ const {chromium}=require('playwright');
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
  await page.screenshot({path:path.resolve(__dirname,'../../../outputs/trimlight-timers-preview.png'),fullPage:true});
  await page.evaluate(()=>{window.states['sensor.not_assigned_trimlight_daily_schedules'].state='unavailable';window.publish()});assert.equal(await first.locator('button[type=submit]').isDisabled(),true);
+ await page.evaluate(()=>{
+  window.states['sensor.not_assigned_trimlight_daily_schedules'].state='2';window.publish();
+  const source=document.querySelector('trimlight-timer-card');
+  for(const timer of [1,2]){const card=document.createElement('trimlight-timer-card');card.dataset.single=timer;card.setConfig({entity:'sensor.not_assigned_trimlight_daily_schedules',timer,config_entry_id:'entry-one'});document.body.append(card);card.hass=source._hass;}
+ });
+ const one=page.locator('trimlight-timer-card[data-single="1"]'),two=page.locator('trimlight-timer-card[data-single="2"]');
+ assert.equal(await one.locator('form').count(),1);assert.equal(await one.locator('form').getAttribute('data-timer'),'0');
+ assert.equal(await two.locator('form').count(),1);assert.equal(await two.locator('form').getAttribute('data-timer'),'1');
+ await one.locator('[data-field="start"]').fill('18:00');await one.locator('button[type=submit]').click();assert.equal((await page.evaluate(()=>window.calls.at(-1))).schedule_id,0);
+ await two.locator('[data-field="start"]').fill('01:00');await two.locator('button[type=submit]').click();assert.equal((await page.evaluate(()=>window.calls.at(-1))).schedule_id,1);
+ await page.screenshot({path:path.resolve(__dirname,'../../../outputs/trimlight-separate-timers-preview.png'),fullPage:true});
  assert.deepEqual(errors,[]);console.log('PASS: two timer forms, real reported times, midnight, repetition/playlist, explicit entry targeting, separate mode changes, dirty-form protection, stale-conflict guard, errors, reload, offline and mobile layout');
 }finally{await browser.close()}})().catch(e=>{console.error(e);process.exitCode=1});
