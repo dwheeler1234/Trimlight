@@ -47,16 +47,45 @@ class TrimlightTimerCard extends HTMLElement {
    if(JSON.stringify(this._record(id)??null)!==draft.baseline)throw Error(`Timer ${id+1} changed on the controller while you were editing. Reload that timer before saving.`);
    if(draft.effect==='')throw Error('Choose a saved pattern or combined-effect playlist.');
    const effect=Number(draft.effect);if(!Number.isInteger(effect)||!(effect>=0&&effect<=59||effect===200))throw Error('Invalid saved pattern ID');
-   const data={config_entry_id:this._entryId,schedule_id:id,enabled:draft.enabled,effect_id:effect,repetition:draft.repetition,start_time:this._rawTime(draft.start,draft.original?.startTime),end_time:this._rawTime(draft.end,draft.original?.endTime)};
+   const data={config_entry_id:this._entryId,schedule_id:id,enabled:this._record(id)?.enable??draft.enabled,effect_id:effect,repetition:draft.repetition,start_time:this._rawTime(draft.start,draft.original?.startTime),end_time:this._rawTime(draft.end,draft.original?.endTime)};
    this._busy=true;this._render();
    await this._hass.callService('trimlight','set_daily_schedule',data);
    // Do not discard edits if the accepted write's follow-up read is delayed.
    const reported=this._record(id);
-   if(reported&&reported.enable===data.enabled&&reported.effectId===data.effect_id&&reported.repetition===TT_REPEAT.findIndex(([key])=>key===data.repetition)&&JSON.stringify(reported.startTime)===JSON.stringify(data.start_time)&&JSON.stringify(reported.endTime)===JSON.stringify(data.end_time))draft.dirty=false;
+   const confirmed=reported&&reported.enable===data.enabled&&reported.effectId===data.effect_id&&reported.repetition===TT_REPEAT.findIndex(([key])=>key===data.repetition)&&JSON.stringify(reported.startTime)===JSON.stringify(data.start_time)&&JSON.stringify(reported.endTime)===JSON.stringify(data.end_time);
+   if(confirmed)draft.dirty=false;
    draft.baseline=JSON.stringify(reported??null);draft.original=reported?JSON.parse(JSON.stringify(reported)):null;
-   this._message=`Timer ${id+1} save accepted. Check the controller/app times. Timer mode is selected separately.`;
+   this._message=confirmed?`Timer ${id+1} settings confirmed by controller readback.`:`Timer ${id+1} save request accepted, but controller readback has not confirmed the changes. Refresh controller before retrying.`;
   }catch(error){this._error=error.message||String(error);}
   finally{this._busy=false;this._render();}
+ }
+ async _toggleEnabled(id,enabled){
+  if(this._busy)return;this._error='';this._message='';
+  try{
+   if(this._config.timer&&id!==this._config.timer-1)throw Error('This card can only change its assigned timer');
+   if(!this._entryId)throw Error('Controller configuration entry is not resolved.');
+   const before=this._record(id);if(!before)throw Error('Save this timer definition before enabling it.');
+   const draft=this._drafts[id];
+   const withoutEnable=row=>{if(!row)return null;const copy={...row};delete copy.enable;return JSON.stringify(copy);};
+   const sameDefinition=withoutEnable(draft.original)===withoutEnable(before);
+   this._busy=true;this._render();
+   await this._hass.callService('trimlight','enable_daily_schedule',{config_entry_id:this._entryId,schedule_id:id,enabled});
+   const reported=this._record(id);
+   // Rebase only our enable change; do not hide conflicts in other saved fields.
+   if(sameDefinition&&withoutEnable(before)===withoutEnable(reported)){
+    draft.enabled=Boolean(reported?.enable);draft.baseline=JSON.stringify(reported??null);draft.original=reported?JSON.parse(JSON.stringify(reported)):null;
+   }
+   const confirmed=reported?.enable===enabled;
+   this._message=confirmed?`Timer ${id+1} ${enabled?'enabled':'disabled'} on the controller.`:`Timer ${id+1} ${enabled?'enable':'disable'} request accepted; awaiting controller readback.`;
+   if(enabled&&this._hass.states[this._config.mode]?.state!=='Timer')this._message+=' Select Use Timer mode to run controller schedules.';
+   if(draft.dirty)this._message+=' Other form edits are not saved yet.';
+  }catch(error){this._error=error.message||String(error);}
+  finally{this._busy=false;this._render();}
+ }
+ async _refreshController(){
+  if(this._busy)return;this._busy=true;this._error='';this._message='';this._render();
+  try{await this._hass.callService('homeassistant','update_entity',{entity_id:this._config.entity});this._message='Controller refresh requested. Enabled follows reported state; Reload timer replaces unsaved form edits.';}
+  catch(error){this._error=error.message||String(error);}finally{this._busy=false;this._render();}
  }
  async _timerMode(){if(this._busy)return;this._busy=true;this._error='';this._message='';this._render();try{await this._hass.callService('select','select_option',{entity_id:this._config.mode,option:'Timer'});this._message='Timer mode requested.';}catch(error){this._error=error.message||String(error);}finally{this._busy=false;this._render();}}
  _render(){
@@ -67,15 +96,17 @@ class TrimlightTimerCard extends HTMLElement {
   const mode=this._hass.states[this._config.mode];
   const form=id=>{const d=this._drafts[id];const has=presets.some(p=>p.id===Number(d.effect))||(Number(d.effect)===200&&playlist);
    const patternOptions=presets.map(p=>`<option value="${p.id}" ${Number(d.effect)===p.id&&d.effect!==''?'selected':''}>${ttEsc(p.name||'Unnamed')} (id ${p.id})</option>`).join('')+(playlist?`<option value="200" ${Number(d.effect)===200?'selected':''}>Combined-effect playlist</option>`:'');
-   return `<form data-timer="${id}"><div class="heading"><h3>Timer ${id+1}</h3><label class="enable"><input type="checkbox" data-field="enabled" ${d.enabled?'checked':''} ${disabled}>Enabled</label></div>
+   return `<form data-timer="${id}"><div class="heading"><h3>Timer ${id+1}</h3><label class="enable"><input type="checkbox" data-enable="${id}" ${this._record(id)?.enable?'checked':''} ${this._busy||offline||!this._entryId||!this._record(id)?'disabled':''}>Enabled</label></div>
    <label>Repetition<select data-field="repetition" ${disabled}>${TT_REPEAT.map(([key,label])=>`<option value="${key}" ${d.repetition===key?'selected':''}>${label}</option>`).join('')}</select></label>
    <label>Library / pattern<select data-field="effect" ${disabled}><option value="" disabled ${d.effect===''?'selected':''}>Choose saved pattern</option>${d.effect!==''&&!has?`<option value="${Number(d.effect)}" selected>Unavailable saved pattern (id ${Number(d.effect)})</option>`:''}${patternOptions}</select></label>
    <div class="times"><label>Start time<input type="time" data-field="start" value="${ttEsc(d.start)}" step="60" required ${disabled}></label><label>Off time<input type="time" data-field="end" value="${ttEsc(d.end)}" step="60" required ${disabled}></label></div>
    <div class="actions"><button type="button" data-reload="${id}" ${this._busy?'disabled':''}>Reload timer</button><button class="primary" type="submit" ${this._busy||offline||!this._entryId?'disabled':''}>Save Timer ${id+1}</button></div><p class="hint">${d.dirty?'Unsaved form changes.':'Loaded controller settings.'}</p></form>`;};
-  this.shadowRoot.innerHTML=`<style>:host{display:block;color:var(--primary-text-color);font-family:Roboto,Arial,sans-serif}*{box-sizing:border-box}ha-card{display:block;padding:16px;background:var(--ha-card-background,var(--card-background-color));border-radius:var(--ha-card-border-radius,16px)}h2{font-size:18px;margin:0 0 12px}h3{font-size:16px;margin:0}.heading,.actions{display:flex;align-items:center;justify-content:space-between;gap:12px}.heading{margin-bottom:12px}form{background:var(--secondary-background-color);border:1px solid var(--divider-color);border-radius:12px;padding:14px;margin-top:14px}label{display:block;font-size:14px;margin-bottom:12px}input,select,button{font:inherit}select,input[type=time]{display:block;width:100%;min-width:0;margin-top:6px;padding:9px;border:1px solid var(--divider-color);border-radius:8px;background:var(--card-background-color);color:var(--primary-text-color)}.enable{display:flex;align-items:center;gap:6px;margin:0}.enable input{accent-color:var(--primary-color);width:20px;height:20px}.times{display:grid;grid-template-columns:1fr 1fr;gap:12px}button{min-height:40px;border:1px solid var(--divider-color);border-radius:8px;padding:8px 12px;cursor:pointer;color:var(--primary-text-color);background:var(--card-background-color)}.primary{background:var(--primary-color);color:var(--text-primary-color)}button:disabled,input:disabled,select:disabled{opacity:.5;cursor:wait}.hint,.mode{font-size:12px;color:var(--secondary-text-color);line-height:1.5}.error{color:var(--error-color);overflow-wrap:anywhere}.message{color:var(--primary-color);font-size:13px}.hint{margin-bottom:0}button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--primary-color)}@media(max-width:340px){.times{grid-template-columns:1fr}.actions{gap:6px;flex-wrap:wrap}}</style><ha-card><h2>${ttEsc(this._config.title||(this._config.timer?`Trimlight Timer ${this._config.timer}`:'Trimlight Timers'))}</h2><p class="mode">Operating mode: ${ttEsc(mode?.state||'Unavailable')}</p><button data-mode ${this._busy||!mode||['unknown','unavailable'].includes(mode.state)?'disabled':''}>Use Timer mode</button>
-  <p class="hint">Each timer saves separately. Select a saved pattern or playlist, repetition, and start/off times. Saving does not change the operating mode. Off times earlier than start can cross midnight; verify execution in the app.</p>
+  this.shadowRoot.innerHTML=`<style>:host{display:block;color:var(--primary-text-color);font-family:Roboto,Arial,sans-serif}*{box-sizing:border-box}ha-card{display:block;padding:16px;background:var(--ha-card-background,var(--card-background-color));border-radius:var(--ha-card-border-radius,16px)}h2{font-size:18px;margin:0 0 12px}h3{font-size:16px;margin:0}.heading,.actions{display:flex;align-items:center;justify-content:space-between;gap:12px}.heading{margin-bottom:12px}form{background:var(--secondary-background-color);border:1px solid var(--divider-color);border-radius:12px;padding:14px;margin-top:14px}label{display:block;font-size:14px;margin-bottom:12px}input,select,button{font:inherit}select,input[type=time]{display:block;width:100%;min-width:0;margin-top:6px;padding:9px;border:1px solid var(--divider-color);border-radius:8px;background:var(--card-background-color);color:var(--primary-text-color)}.enable{display:flex;align-items:center;gap:6px;margin:0}.enable input{accent-color:var(--primary-color);width:20px;height:20px}.times{display:grid;grid-template-columns:1fr 1fr;gap:12px}button{min-height:40px;border:1px solid var(--divider-color);border-radius:8px;padding:8px 12px;cursor:pointer;color:var(--primary-text-color);background:var(--card-background-color)}.primary{background:var(--primary-color);color:var(--text-primary-color)}button:disabled,input:disabled,select:disabled{opacity:.5;cursor:wait}.hint,.mode{font-size:12px;color:var(--secondary-text-color);line-height:1.5}.error{color:var(--error-color);overflow-wrap:anywhere}.message{color:var(--primary-color);font-size:13px}.hint{margin-bottom:0}button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--primary-color)}@media(max-width:340px){.times{grid-template-columns:1fr}.actions{gap:6px;flex-wrap:wrap}}</style><ha-card><h2>${ttEsc(this._config.title||(this._config.timer?`Trimlight Timer ${this._config.timer}`:'Trimlight Timers'))}</h2><p class="mode">Operating mode: ${ttEsc(mode?.state||'Unavailable')}</p><button data-mode ${this._busy||!mode||['unknown','unavailable'].includes(mode.state)?'disabled':''}>Use Timer mode</button> <button data-refresh ${this._busy?'disabled':''}>Refresh controller</button>
+  <p class="hint">Enabled applies immediately to the saved timer. Save applies pattern, repetition and time edits separately. Use Timer mode to run controller schedules. Off times earlier than start can cross midnight; verify execution in the app.</p>
   ${offline?'<p class="error">Daily schedules sensor unavailable. Check the entity ID and integration connection.</p>':''}${!this._entryId?'<p class="hint">Resolving controller configuration entry…</p>':''}${this._error?`<p class="error" role="alert">${ttEsc(this._error)}</p>`:''}${this._message?`<p class="message" role="status">${ttEsc(this._message)}</p>`:''}${this._config.timer?form(this._config.timer-1):form(0)+form(1)}</ha-card>`;
+  this.shadowRoot.querySelector('[data-refresh]').onclick=()=>this._refreshController();
   this.shadowRoot.querySelector('[data-mode]').onclick=()=>this._timerMode();
+  this.shadowRoot.querySelectorAll('[data-enable]').forEach(input=>{input.onchange=()=>this._toggleEnabled(Number(input.dataset.enable),input.checked);});
   this.shadowRoot.querySelectorAll('form').forEach(form=>{const id=Number(form.dataset.timer);form.onsubmit=event=>{event.preventDefault();this._save(id);};
    form.querySelectorAll('[data-field]').forEach(input=>{const update=()=>{this._drafts[id][input.dataset.field]=input.type==='checkbox'?input.checked:input.value;this._drafts[id].dirty=true;form.querySelector('.hint').textContent='Unsaved form changes.';};input.oninput=update;input.onchange=update;});
   });
