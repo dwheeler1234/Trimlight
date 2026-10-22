@@ -46,11 +46,11 @@ Schedule writes also need vendor time-format confirmation. Port bounds need comp
 
 | ID | Feature | Implementation | Validation | Evidence / next check |
 | --- | --- | --- | --- | --- |
-| TL-011 | Power on/off | Implemented | Not tested | Test in Manual mode. |
-| TL-012 | Brightness | Implemented | Not tested | Test saved and temporary effects. |
-| TL-013 | Temporary solid RGB color | Implemented | Not tested | Verify preview remains unsaved. |
-| TL-014 | Built-in preset selection | Implemented | Not tested | Verify controller effect and state. |
-| TL-015 | Saved custom preset selection | Implemented | Not tested | Verify controller effect and state. |
+| TL-011 | Power on/off | Implemented | Verified | User confirmed all compact control card features work on 2026-10-22: power, horizontal brightness, RGB picker/palette and saved/built-in pattern selection; tracking issue #17. |
+| TL-012 | Brightness | Implemented | Verified | User confirmed all compact control card features work on 2026-10-22: power, horizontal brightness, RGB picker/palette and saved/built-in pattern selection; tracking issue #17. |
+| TL-013 | Temporary solid RGB color | Implemented | Verified | User confirmed all compact control card features work on 2026-10-22: power, horizontal brightness, RGB picker/palette and saved/built-in pattern selection; tracking issue #17. |
+| TL-014 | Built-in preset selection | Implemented | Verified | User confirmed all compact control card features work on 2026-10-22: power, horizontal brightness, RGB picker/palette and saved/built-in pattern selection; tracking issue #17. |
+| TL-015 | Saved custom preset selection | Implemented | Verified | User confirmed all compact control card features work on 2026-10-22: power, horizontal brightness, RGB picker/palette and saved/built-in pattern selection; tracking issue #17. |
 | TL-016 | Custom effect mode selection | Implemented | Not tested | Verify supported modes. |
 | TL-017 | Effect speed slider | Implemented | Not tested | Value observed; physical effect not confirmed. |
 | TL-018 | Built-in effect length | Implemented | Not tested | 1-90; requires suitable active built-in effect. |
@@ -163,4 +163,4 @@ Schedule writes also need vendor time-format confirmation. Port bounds need comp
 
 | ID | Feature | Implementation | Validation | Evidence / next check |
 | --- | --- | --- | --- | --- |
-| TL-092 | Separate compact control card: power, horizontal brightness, RGB picker, shared palette and combined saved/built-in pattern dropdown | Implemented | Retest needed | beta.15; simulated Edge tests cover service routing and states. Verify live controller and iPhone gestures. |
+| TL-092 | Separate compact control card: power, horizontal brightness, RGB picker, shared palette and combined saved/built-in pattern dropdown | Implemented | Verified | User confirmed all compact control card features work on 2026-10-22: power, horizontal brightness, RGB picker/palette and saved/built-in pattern selection; tracking issue #17. |
