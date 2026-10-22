@@ -701,3 +701,34 @@ the existing 10-second timeout. See the feature register for live-test status.
 In beta.22, timer cards omit the operating-mode display, Use Timer mode and
 Refresh controller buttons. Use the existing Operating Mode card separately.
 Timer cards retain repetition, pattern, start/off time, Save and Reload timer.
+
+## Daily schedule switches with progress indicator
+
+Update to beta.23 and restart Home Assistant. Add this additional JavaScript
+module resource, keeping your other Trimlight resource entries:
+
+`/trimlight/trimlight-schedule-row.js?v=0.2.0-beta.23`
+
+Replace only the two daily-switch rows in your existing Entities card with custom
+rows. Other schedule/playlist rows can stay unchanged. Example:
+
+```yaml
+type: entities
+title: Trimlight Schedules and Playlist
+show_header_toggle: false
+entities:
+  - type: custom:trimlight-schedule-row
+    entity: switch.not_assigned_trimlight_daily_schedule_1
+    name: Daily Schedule 1
+  - type: custom:trimlight-schedule-row
+    entity: switch.not_assigned_trimlight_daily_schedule_2
+    name: Daily Schedule 2
+  - entity: sensor.not_assigned_trimlight_playlist
+```
+
+The custom row replaces the control with a rotating progress indicator during
+the service request and pending verification, then restores a single toggle.
+It blocks duplicate clicks while pending and shows rejected/unconfirmed readback
+messages. Backend switch logic is unchanged. This is an Entities-card row, not a
+standalone card. Standard Home Assistant rows retain their built-in assumed-state
+[two-button display](https://www.home-assistant.io/integrations/homeassistant/).
