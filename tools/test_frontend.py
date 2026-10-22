@@ -24,7 +24,14 @@ class FrontendTests(unittest.TestCase):
             coro = module.async_setup_frontend(SimpleNamespace(http=SimpleNamespace(async_register_static_paths=register)))
             with self.assertRaises(StopIteration):
                 coro.send(None)
-            config = register.call_args.args[0][0]
+            configs = register.call_args.args[0]
+            self.assertEqual(len(configs), 3)
+            self.assertEqual({c.url_path for c in configs}, {
+                '/trimlight/trimlight-pattern-card.js', '/trimlight/trimlight-control-card.js',
+                '/trimlight/trimlight-timer-card.js'})
+            for registered in configs:
+                self.assertEqual(Path(registered.path).read_bytes(), (ROOT/'www'/Path(registered.path).name).read_bytes())
+            config = configs[0]
             self.assertEqual(config.url_path, '/trimlight/trimlight-pattern-card.js')
             self.assertFalse(config.cache_headers)
             self.assertEqual(Path(config.path).read_bytes(), (ROOT/'www/trimlight-pattern-card.js').read_bytes())

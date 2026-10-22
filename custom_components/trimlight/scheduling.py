@@ -77,7 +77,7 @@ class SchedulingController(ManagementController):
                     raise ValueError("Choose today_only, everyday, weekdays, or weekend")
                 daily = {"id": sid, "enable": data["enabled"], "effectId": schedule_effect(data["effect_id"]),
                          "repetition": REPETITIONS[data["repetition"]],
-                         "startTime": schedule_time(data["start_time"]), "endTime": schedule_time(data["end_time"])}
+                         "startTime": schedule_time(data["start_time"], reported=True), "endTime": schedule_time(data["end_time"], reported=True)}
             if data["enabled"]:
                 require_effect(payload, daily["effectId"])
             now = self.api._current_date_payload()

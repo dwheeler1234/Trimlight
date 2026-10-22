@@ -643,3 +643,18 @@ on this card; its native number entity remains available separately. These are l
 controls, not draft-editor fields. The existing Pattern selector keeps both saved
 and built-in presets. Optional overrides: `effect_entity`, `speed_entity`,
 `length_entity`, `reverse_entity`; defaults use the configured light's prefix.
+
+## Two daily timer editor
+
+Update to **0.2.0-beta.18** through HACS, restart Home Assistant, and add this
+additional **JavaScript module** resource (keep your other Trimlight resources):
+
+`/trimlight/trimlight-timer-card.js?v=0.2.0-beta.18`
+
+```yaml
+type: custom:trimlight-timer-card
+title: Trimlight Timers
+entity: sensor.not_assigned_trimlight_daily_schedules
+```
+
+[Timer editor instructions and time-format notes](docs/timer-editor.md).

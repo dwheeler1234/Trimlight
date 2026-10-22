@@ -28,12 +28,32 @@ def setup():
 
 
 class ScheduleTests(unittest.TestCase):
+    def test_daily_sensor_exposes_saved_pattern_choices_and_playlist(self):
+        entity, runtime, api, _ = setup()
+        entity.coordinator.data = {"payload": api.get_device_detail.return_value["payload"]}
+        sensor = f.sensor.TrimlightScheduleSensor(entity._hass, "test", entity.coordinator, "daily", "Daily Schedules")
+        attrs = sensor.extra_state_attributes
+        self.assertTrue(attrs["playlist_available"])
+        self.assertIn(7, [p["id"] for p in attrs["presets"]])
+        self.assertNotIn("pixels", attrs["presets"][0])
+        attrs["schedules"][0]["enable"] = False
+        self.assertTrue(entity.coordinator.data["payload"]["daily"][0]["enable"])
+
     async def test_daily_payload_includes_local_current_date(self):
         _, _, api, controller = setup()
         await controller.execute("set_daily_schedule", {"schedule_id":1,"enabled":True,"effect_id":7,
             "repetition":"weekend","start_time":{"hours":22,"minutes":15},"end_time":{"hours":6,"minutes":30}})
         api.save_daily_schedule.assert_awaited_once_with({"id":1,"enable":True,"effectId":7,"repetition":3,
             "startTime":{"hours":22,"minutes":15},"endTime":{"hours":6,"minutes":30},"currentDate":{"month":10,"day":20}})
+        api.set_switch_state.assert_not_awaited()
+
+    async def test_daily_allows_midnight_and_whole_hours_verbatim(self):
+        _, _, api, controller = setup()
+        await controller.execute("set_daily_schedule", {"schedule_id":0,"enabled":True,"effect_id":7,
+            "repetition":"everyday","start_time":{"hours":19,"minutes":0},"end_time":{"hours":0,"minutes":0}})
+        saved = api.save_daily_schedule.await_args.args[0]
+        self.assertEqual(saved["startTime"], {"hours":19,"minutes":0})
+        self.assertEqual(saved["endTime"], {"hours":0,"minutes":0})
         api.set_switch_state.assert_not_awaited()
 
     async def test_toggle_preserves_existing_controller_times_even_zero(self):
@@ -47,7 +67,7 @@ class ScheduleTests(unittest.TestCase):
         self.assertEqual(saved["effectId"], 7)
 
     async def test_daily_rejects_bad_slot_boolean_and_new_time(self):
-        for changed in [{"schedule_id":2}, {"enabled":1}, {"start_time":{"hours":0,"minutes":0}},
+        for changed in [{"schedule_id":2}, {"enabled":1}, {"start_time":{"hours":25,"minutes":0}},
                         {"repetition":"weekly"}, {"effect_id":199}]:
             _, _, api, controller = setup()
             data = {"schedule_id":0,"enabled":True,"effect_id":7,"repetition":"everyday",
