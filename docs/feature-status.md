@@ -198,3 +198,10 @@ Schedule writes also need vendor time-format confirmation. Port bounds need comp
 | TL-099 | Daily schedule custom entity row replaces pending on/off icons with a rotating progress indicator | Implemented | Retest needed | beta.23; simulated Edge verifies request/pending spinner, duplicate-click blocking, toggle restoration and errors. Requires custom rows/resource in the dashboard; backend unchanged. |
 
 User reports daily switches appear to work after loading beta.22. Progress display is tracked separately from backend verification; actual phone/dashboard acceptance remains outstanding.
+
+## Calendar event editor
+
+| ID | Feature | Implementation | Validation | Evidence / next check |
+| --- | --- | --- | --- | --- |
+| TL-100 | Annual calendar card: saved-event selection, new free-slot creation, month/day ranges, saved pattern/playlist, start/off times, edit, confirmed deletion and readback feedback | Implemented | Retest needed | beta.24; simulated browser covers create/edit/delete, annual wrap, midnight, stale data, rejected writes, pending readback, 60-slot capacity and mobile layout. Needs real controller/calendar-time acceptance. |
+| TL-101 | Calendar create-only action rejects occupied controller slots | Implemented | Retest needed | beta.24; fresh API occupancy check before create, existing save keeps upsert semantics. Offline tests pass; API does not provide atomic cross-client CAS. |

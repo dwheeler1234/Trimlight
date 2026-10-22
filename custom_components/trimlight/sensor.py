@@ -58,7 +58,7 @@ class TrimlightScheduleSensor(TrimlightEntity, SensorEntity):
             value = payload.get(self.field) or {}
             return {"effect_ids": list(value.get("effectIds") or []), "interval_minutes": value.get("interval")}
         attributes = {"schedules": deepcopy(payload.get(self.field) or [])}
-        if self.field == "daily":
+        if self.field in {"daily", "calendar"}:
             attributes["presets"] = [{"id": effect["id"], "name": effect.get("name") or "Unnamed"}
                                      for effect in payload.get("effects") or []
                                      if isinstance(effect, dict) and isinstance(effect.get("id"), int)

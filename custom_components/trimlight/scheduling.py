@@ -14,6 +14,8 @@ SCHEDULE_FIELDS = {
     "enable_daily_schedule": {"schedule_id": int, "enabled": bool},
     "save_calendar_schedule": {"schedule_id": int, "effect_id": int, "start_date": dict,
                                "end_date": dict, "start_time": dict, "end_time": dict},
+    "create_calendar_schedule": {"schedule_id": int, "effect_id": int, "start_date": dict,
+                                 "end_date": dict, "start_time": dict, "end_time": dict},
     "delete_calendar_schedule": {"schedule_id": int},
     "set_playlist": {"effect_ids": list, "interval": int}, "run_playlist": {},
 }
@@ -90,12 +92,14 @@ class SchedulingController(ManagementController):
                 self.runtime.daily_verifier.accept(sid, data["enabled"])
                 return dict(result, confirmation_pending=True)
             return await self.refresh(result)
-        if action == "save_calendar_schedule":
+        if action in {"save_calendar_schedule", "create_calendar_schedule"}:
             calendar = {"id": bounded_int(data["schedule_id"], 0, 59, "Calendar slot"),
                         "effectId": schedule_effect(data["effect_id"]),
                         "startDate": schedule_date(data["start_date"]), "endDate": schedule_date(data["end_date"]),
-                        "startTime": schedule_time(data["start_time"]), "endTime": schedule_time(data["end_time"])}
+                        "startTime": schedule_time(data["start_time"], reported=True), "endTime": schedule_time(data["end_time"], reported=True)}
             payload = await self.detail()
+            if action == "create_calendar_schedule" and any(row.get("id") == calendar["id"] for row in payload.get("calendar") or []):
+                raise ValueError("This calendar slot is already occupied. Refresh and create the event again.")
             require_effect(payload, calendar["effectId"])
             return await self.refresh(await self.checked(self.api.save_calendar_schedule(calendar)))
         if action == "delete_calendar_schedule":

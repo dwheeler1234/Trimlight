@@ -122,6 +122,24 @@ class ScheduleTests(unittest.TestCase):
         self.assertEqual(saved["effectId"], 200)
         api.set_switch_state.assert_not_awaited()
 
+    async def test_calendar_create_rejects_occupied_slot(self):
+        _, _, api, controller = setup()
+        with self.assertRaisesRegex(f.HomeAssistantError, "occupied"):
+            await controller.execute("create_calendar_schedule", {"schedule_id":0,"effect_id":7,
+                "start_date":{"month":12,"day":1},"end_date":{"month":1,"day":1},
+                "start_time":{"hours":19,"minutes":0},"end_time":{"hours":0,"minutes":0}})
+        api.save_calendar_schedule.assert_not_awaited()
+
+    async def test_calendar_create_supports_midnight_and_new_year_wrap(self):
+        _, _, api, controller = setup()
+        await controller.execute("create_calendar_schedule", {"schedule_id":1,"effect_id":7,
+            "start_date":{"month":12,"day":31},"end_date":{"month":1,"day":2},
+            "start_time":{"hours":19,"minutes":0},"end_time":{"hours":0,"minutes":0}})
+        saved = api.save_calendar_schedule.await_args.args[0]
+        self.assertEqual(saved["startDate"], {"month":12,"day":31})
+        self.assertEqual(saved["endTime"], {"hours":0,"minutes":0})
+        api.set_switch_state.assert_not_awaited()
+
     def test_calendar_dates_validate_real_days_and_leap_day(self):
         self.assertEqual(scheduling.schedule_date({"month":2,"day":29}), {"month":2,"day":29})
         for value in [{"month":2,"day":30}, {"month":4,"day":31}, {"month":13,"day":1}, {"month":1}]:

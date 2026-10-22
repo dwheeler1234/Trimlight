@@ -388,3 +388,41 @@ run_playlist:
       selector:
         config_entry:
           integration: trimlight
+
+create_calendar_schedule:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: trimlight
+    schedule_id:
+      required: true
+      selector:
+        number:
+          min: 0
+          max: 59
+          mode: box
+    effect_id:
+      required: true
+      selector:
+        number:
+          min: 0
+          max: 200
+          mode: box
+    start_date:
+      required: true
+      selector:
+        object: {}
+    end_date:
+      required: true
+      selector:
+        object: {}
+    start_time:
+      required: true
+      selector:
+        object: {}
+    end_time:
+      required: true
+      selector:
+        object: {}
